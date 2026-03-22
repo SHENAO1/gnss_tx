@@ -1,0 +1,21 @@
+# Visible-spectrum profile validated on the spectrum analyzer:
+# - Intended for reproducible observation of the PRN1 spread-spectrum envelope
+# - Keep the same cable path and analyzer settings when comparing results
+prn_id: 1
+signal_mode: "spread"
+usrp_addr: "type=b200"
+center_freq: 100000000.0
+samples_per_chip: 4
+sample_rate: 4092000.0
+tx_gain: 10.0
+amplitude: 0.5
+antenna: "TX/RX"
+bandwidth: 4092000.0
+nav_pattern: "1 0 1 1 0 0 1 0"
+tone_offset_hz: 500000.0
+tone_buffer_s: 0.1
+duration_s: null
+continuous: true
+initial_code_phase: 0
+initial_nav_epoch: 0
+initial_nav_bit_index: 0
