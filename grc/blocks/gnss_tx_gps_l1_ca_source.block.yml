@@ -1,0 +1,66 @@
+id: gnss_tx_gps_l1_ca_source
+label: GNSS TX PRN1 Source
+category: '[GNSS TX]'
+flags: [python]
+
+parameters:
+- id: prn_id
+  label: PRN ID
+  dtype: int
+  default: '1'
+- id: samples_per_chip
+  label: Samples / Chip
+  dtype: int
+  default: '4'
+- id: amplitude
+  label: Internal Amplitude
+  dtype: real
+  default: '1.0'
+- id: nav_pattern
+  label: Nav Pattern
+  dtype: string
+  default: '"1 0 1 1 0 0 1 0"'
+- id: initial_code_phase
+  label: Initial Code Phase
+  dtype: int
+  default: '0'
+- id: initial_nav_epoch
+  label: Initial Nav Epoch
+  dtype: int
+  default: '0'
+- id: initial_nav_bit_index
+  label: Initial Nav Bit Index
+  dtype: int
+  default: '0'
+
+outputs:
+- domain: stream
+  dtype: complex
+
+asserts:
+- ${ prn_id == 1 }
+- ${ samples_per_chip > 0 }
+
+templates:
+  imports: from gnss_tx.gr import make_gps_l1_ca_vector_source
+  make: >-
+    make_gps_l1_ca_vector_source(
+        prn_id=${prn_id},
+        samples_per_chip=${samples_per_chip},
+        amplitude=${amplitude},
+        nav_pattern=${nav_pattern},
+        initial_code_phase=${initial_code_phase},
+        initial_nav_epoch=${initial_nav_epoch},
+        initial_nav_bit_index=${initial_nav_bit_index},
+    )
+
+documentation: |-
+    GPS L1 C/A PRN1 buffered replay source.
+
+    v1 notes:
+    - Output is complex64 baseband with zero-valued Q branch
+    - Internal navigation data is a cyclic 50 bps test pattern
+    - One full nav-pattern period is precomputed and replayed in a loop
+    - Only PRN1 is implemented in the current codebase
+
+file_format: 1
