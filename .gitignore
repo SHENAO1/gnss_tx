@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.build/
+dist/
+
+# Virtual environment
+.venv/
+venv/
+env_local/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+results/logs/
+
+# Runtime results
+results/iq/*
+results/csv/*
+results/npy/*
+results/figs/*
+!results/iq/.gitkeep
+!results/csv/.gitkeep
+!results/npy/.gitkeep
+!results/figs/.gitkeep
+
+# Data
+data/raw/*
+data/intermediate/*
+!data/raw/.gitkeep
+!data/intermediate/.gitkeep
+
+# GNU Radio generated files
+*.grc.bak
+*.autosave
