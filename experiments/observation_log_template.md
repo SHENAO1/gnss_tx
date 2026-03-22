@@ -1,12 +1,12 @@
-# RF Observation Log Template
+# 射频观察记录模板
 
-- Date:
-- Operator:
-- Signal mode:
-- Config profile:
-- Screenshot file:
+- 实验日期：
+- 操作者：
+- 信号模式：
+- 配置文件：
+- 截图文件：
 
-## TX configuration
+## 发射参数
 
 - `center_freq =`
 - `sample_rate =`
@@ -15,7 +15,7 @@
 - `amplitude =`
 - `antenna =`
 
-## Spectrum analyzer settings
+## 频谱仪设置
 
 - `Center =`
 - `Span =`
@@ -24,9 +24,9 @@
 - `Att =`
 - `Ref Level =`
 
-## Result
+## 观察结果
 
-- Visible during TX:
-- Disappears after TX stops:
-- Shape stable across repeated runs:
-- Notes:
+- 发射期间可见：
+- 停止发射后消失：
+- 重复运行后形状稳定：
+- 备注：

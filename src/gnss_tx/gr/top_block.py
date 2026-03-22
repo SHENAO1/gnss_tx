@@ -10,12 +10,24 @@ from gnss_tx.signal.iq_builder import generate_complex_tone
 from gnss_tx.signal.spreader import GpsL1CaBpskGenerator
 
 try:
-    from gnuradio import blocks, gr
+    from gnuradio import blocks, gr, qtgui
+    from gnuradio.fft import window
 except ImportError:  # pragma: no cover - GNU Radio is optional in the dev environment.
     blocks = None
     gr = None
+    qtgui = None
+    window = None
+
+try:
+    from PyQt5 import QtCore, QtWidgets
+    import sip
+except ImportError:  # pragma: no cover - optional in test environments
+    QtCore = None
+    QtWidgets = None
+    sip = None
 
 HAVE_GNURADIO = gr is not None
+HAVE_QTGUI = HAVE_GNURADIO and qtgui is not None and QtWidgets is not None and sip is not None
 _SyncBlockBase = gr.sync_block if HAVE_GNURADIO else object
 _TopBlockBase = gr.top_block if HAVE_GNURADIO else object
 
@@ -35,9 +47,67 @@ class TxBlockConfig:
     bandwidth: float | None = None
     antenna: str = "TX/RX"
     usrp_addr: str = "type=b200"
+    enable_qt_preview: bool = False
     initial_code_phase: int = 0
     initial_nav_epoch: int = 0
     initial_nav_bit_index: int = 0
+
+
+def _build_time_sink(sample_rate: float):
+    if not HAVE_QTGUI:
+        raise RuntimeError("GNU Radio Qt GUI support is not available in this Python environment.")
+
+    sink = qtgui.time_sink_c(512, sample_rate, "TX Baseband Time Preview", 1, None)
+    sink.set_update_time(0.10)
+    sink.set_y_axis(-1.2, 1.2)
+    sink.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+    if hasattr(sink, "enable_grid"):
+        sink.enable_grid(True)
+    if hasattr(sink, "enable_axis_labels"):
+        sink.enable_axis_labels(True)
+    if hasattr(sink, "set_line_label"):
+        sink.set_line_label(0, "I")
+        sink.set_line_label(1, "Q")
+    return sink
+
+
+def _build_freq_sink(center_freq: float, sample_rate: float):
+    if not HAVE_QTGUI:
+        raise RuntimeError("GNU Radio Qt GUI support is not available in this Python environment.")
+
+    sink = qtgui.freq_sink_c(
+        2048,
+        window.WIN_BLACKMAN_hARRIS,
+        center_freq,
+        sample_rate,
+        "TX Baseband Spectrum Preview",
+        1,
+        None,
+    )
+    sink.set_update_time(0.10)
+    sink.set_y_axis(-120, 10)
+    if hasattr(sink, "set_fft_average"):
+        sink.set_fft_average(0.2)
+    if hasattr(sink, "enable_grid"):
+        sink.enable_grid(True)
+    if hasattr(sink, "enable_axis_labels"):
+        sink.enable_axis_labels(True)
+    if hasattr(sink, "set_line_label"):
+        sink.set_line_label(0, "TX Preview")
+    return sink
+
+
+class TxPreviewWindow(QtWidgets.QWidget if QtWidgets is not None else object):
+    def __init__(self, time_sink, freq_sink) -> None:
+        if not HAVE_QTGUI:
+            raise RuntimeError("GNU Radio Qt GUI support is not available in this Python environment.")
+
+        super().__init__()
+        self.setWindowTitle("GNSS TX QT Preview")
+        self.resize(1400, 900)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(sip.wrapinstance(time_sink.qwidget(), QtWidgets.QWidget))
+        layout.addWidget(sip.wrapinstance(freq_sink.qwidget(), QtWidgets.QWidget))
 
 
 def build_replay_samples(
@@ -188,9 +258,14 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
     def __init__(self, config: TxBlockConfig, sink_block=None) -> None:
         if not HAVE_GNURADIO:
             raise RuntimeError("GNU Radio is not available in this Python environment.")
+        if config.enable_qt_preview and not HAVE_QTGUI:
+            raise RuntimeError("Qt preview requested, but GNU Radio Qt GUI support is unavailable.")
 
         super().__init__("gnss_tx_prn1_main")
         self.config = config
+        self.preview_window = None
+        self.qt_time_sink = None
+        self.qt_freq_sink = None
         if config.signal_mode == "tone":
             self.replay_samples = build_tone_replay_samples(
                 sample_rate=config.sample_rate,
@@ -213,18 +288,34 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
         self.sink_block = sink_block
 
         self.connect(self.source, self.multiply_const)
+        if config.enable_qt_preview:
+            self.qt_time_sink = _build_time_sink(config.sample_rate)
+            self.qt_freq_sink = _build_freq_sink(config.center_freq, config.sample_rate)
+            self.preview_window = TxPreviewWindow(self.qt_time_sink, self.qt_freq_sink)
+            self.connect(self.multiply_const, self.qt_time_sink)
+            self.connect(self.multiply_const, self.qt_freq_sink)
         if sink_block is not None:
             self.connect(self.multiply_const, sink_block)
 
     def set_amplitude(self, amplitude: float) -> None:
         self.multiply_const.set_k(float(amplitude))
 
+    def show_preview(self) -> None:
+        if self.preview_window is not None:
+            self.preview_window.show()
+
+    def close_preview(self) -> None:
+        if self.preview_window is not None:
+            self.preview_window.close()
+
 
 __all__ = [
     "GpsL1CaSourceBlock",
     "GpsL1CaTxTopBlock",
     "HAVE_GNURADIO",
+    "HAVE_QTGUI",
     "TxBlockConfig",
+    "TxPreviewWindow",
     "build_replay_samples",
     "build_tone_replay_samples",
     "make_gps_l1_ca_vector_source",

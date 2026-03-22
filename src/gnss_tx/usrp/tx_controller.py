@@ -30,6 +30,7 @@ class TxRuntimeConfig:
     nav_pattern: str = "1 0 1 1 0 0 1 0"
     tone_offset_hz: float = 500e3
     tone_buffer_s: float = 0.1
+    enable_qt_preview: bool = False
     duration_s: float | None = None
     continuous: bool = True
     initial_code_phase: int = 0
@@ -79,6 +80,7 @@ class TxRuntimeConfig:
             bandwidth=self.bandwidth,
             antenna=self.antenna,
             usrp_addr=self.usrp_addr,
+            enable_qt_preview=self.enable_qt_preview,
             initial_code_phase=self.initial_code_phase,
             initial_nav_epoch=self.initial_nav_epoch,
             initial_nav_bit_index=self.initial_nav_bit_index,
@@ -169,6 +171,60 @@ def format_observation_checklist(config: TxRuntimeConfig) -> str:
     return "\n".join(lines)
 
 
+def extract_uhd_device_field(device_report: str, field_name: str) -> str:
+    prefix = f"{field_name}:"
+    for line in device_report.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(prefix):
+            return stripped.split(":", maxsplit=1)[1].strip()
+    return ""
+
+
+def _signal_center_frequency_hz(config: TxRuntimeConfig) -> float:
+    if config.signal_mode == "tone":
+        return config.center_freq + config.tone_offset_hz
+    return config.center_freq
+
+
+def _signal_offset_frequency_hz(config: TxRuntimeConfig) -> float:
+    if config.signal_mode == "tone":
+        return config.tone_offset_hz
+    return 0.0
+
+
+def _signal_generation_label(config: TxRuntimeConfig) -> str:
+    if config.signal_mode == "tone":
+        return "单音缓冲回放"
+    return "PRN1 C/A 扩频缓冲回放"
+
+
+def format_lab_table_summary(config: TxRuntimeConfig, device_report: str = "") -> str:
+    serial = extract_uhd_device_field(device_report, "serial") or config.usrp_addr
+    gr_flowgraph_field = "QT 预览开启" if config.enable_qt_preview else "不输出"
+    gr_spectrum_field = "QT 频谱预览开启" if config.enable_qt_preview else "不输出"
+    lines = [
+        "=" * 60,
+        "实验表格参数摘要",
+        "=" * 60,
+        f"发送信号类型={'扩频' if config.signal_mode == 'spread' else '单音'}",
+        f"GNU Radio流图={gr_flowgraph_field}",
+        f"GNU Radio频谱={gr_spectrum_field}",
+        "频谱仪结果=手工填写",
+        f"采样率={config.sample_rate}",
+        f"射频中心频率={config.center_freq}",
+        f"发射增益={config.tx_gain}",
+        f"带宽={config.bandwidth}",
+        f"serial={serial}",
+        f"信号观测频率={_signal_center_frequency_hz(config)}",
+        f"基带偏移频率={_signal_offset_frequency_hz(config)}",
+        f"幅度={config.amplitude}",
+        "是否归一化=是",
+        "是否直流偏置=否",
+        f"生成方式={_signal_generation_label(config)}",
+    ]
+    return "\n".join(lines)
+
+
 def uhd_find_devices_output() -> str:
     completed = subprocess.run(
         ["uhd_find_devices"],
@@ -198,7 +254,9 @@ __all__ = [
     "TxRuntimeConfig",
     "apply_overrides",
     "build_tx_top_block",
+    "extract_uhd_device_field",
     "format_config_report",
+    "format_lab_table_summary",
     "format_observation_checklist",
     "is_b210_available",
     "load_tx_runtime_config",

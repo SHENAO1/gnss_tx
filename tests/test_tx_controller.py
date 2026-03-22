@@ -7,6 +7,7 @@ from gnss_tx.usrp.tx_controller import (
     TxRuntimeConfig,
     apply_overrides,
     format_config_report,
+    format_lab_table_summary,
     format_observation_checklist,
     load_tx_runtime_config,
 )
@@ -57,6 +58,45 @@ class TestTxController(unittest.TestCase):
         self.assertIn("100.000 MHz", checklist)
         self.assertIn("20 MHz", checklist)
         self.assertIn("TX/RX", checklist)
+
+    def test_lab_table_summary_contains_serial_and_generation_mode(self) -> None:
+        config = TxRuntimeConfig(tx_gain=10.0, amplitude=0.5).validate()
+        summary = format_lab_table_summary(
+            config,
+            "Device Address:\n    serial: 193982\n    type: b200\n",
+        )
+        self.assertIn("实验表格参数摘要", summary)
+        self.assertIn("GNU Radio流图=不输出", summary)
+        self.assertIn("serial=193982", summary)
+        self.assertIn("生成方式=PRN1 C/A 扩频缓冲回放", summary)
+        self.assertIn("幅度=0.5", summary)
+        self.assertIn("射频中心频率=100000000.0", summary)
+        self.assertIn("信号观测频率=100000000.0", summary)
+        self.assertIn("基带偏移频率=0.0", summary)
+
+    def test_lab_table_summary_reports_tone_offset_frequency(self) -> None:
+        config = TxRuntimeConfig(
+            signal_mode="tone",
+            center_freq=100_000_000.0,
+            sample_rate=4_092_000.0,
+            tone_offset_hz=500_000.0,
+            tx_gain=6.0,
+            amplitude=0.5,
+        ).validate()
+
+        summary = format_lab_table_summary(config)
+
+        self.assertIn("生成方式=单音缓冲回放", summary)
+        self.assertIn("基带偏移频率=500000.0", summary)
+        self.assertIn("信号观测频率=100500000.0", summary)
+
+    def test_lab_table_summary_marks_qt_preview_when_enabled(self) -> None:
+        config = TxRuntimeConfig(enable_qt_preview=True).validate()
+
+        summary = format_lab_table_summary(config)
+
+        self.assertIn("GNU Radio流图=QT 预览开启", summary)
+        self.assertIn("GNU Radio频谱=QT 频谱预览开启", summary)
 
     def test_tone_mode_accepts_non_chip_rate_sample_rate(self) -> None:
         config = TxRuntimeConfig(

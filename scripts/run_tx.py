@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
+import signal
 import sys
 import time
 
@@ -9,6 +11,7 @@ from gnss_tx.usrp import (
     apply_overrides,
     build_tx_top_block,
     format_config_report,
+    format_lab_table_summary,
     format_observation_checklist,
     is_b210_available,
     load_tx_runtime_config,
@@ -28,6 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tone-offset-hz", type=float)
     parser.add_argument("--duration", type=float, dest="duration_s")
     parser.add_argument("--amplitude", type=float)
+    parser.add_argument(
+        "--qt-preview",
+        action="store_true",
+        help="Show GNU Radio QT time/frequency previews while transmitting.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -50,6 +58,7 @@ def main() -> int:
         tone_offset_hz=args.tone_offset_hz,
         duration_s=args.duration_s,
         amplitude=args.amplitude,
+        enable_qt_preview=args.qt_preview,
     )
 
     print(format_config_report(config))
@@ -59,6 +68,8 @@ def main() -> int:
     device_report = uhd_find_devices_output()
     print("UHD discovery output:")
     print(device_report if device_report else "(no output)")
+    print("")
+    print(format_lab_table_summary(config, device_report))
 
     if args.dry_run:
         print("")
@@ -71,11 +82,33 @@ def main() -> int:
         return 1
 
     tb = build_tx_top_block(config)
+    app = None
+    timer = None
     print("")
-    print("[INFO] Starting transmission. Keep analyzer protection enabled for the first low-power observation.")
+    if config.enable_qt_preview:
+        from PyQt5 import QtCore, QtWidgets
+
+        if "DISPLAY" not in os.environ and "WAYLAND_DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
+            print("[ERROR] QT preview requested, but no display server was detected. Set DISPLAY or QT_QPA_PLATFORM.")
+            return 1
+
+        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
+        signal.signal(signal.SIGINT, lambda *_args: app.quit())
+        timer = QtCore.QTimer()
+        timer.start(200)
+        timer.timeout.connect(lambda: None)
+        if config.duration_s is not None:
+            QtCore.QTimer.singleShot(int(config.duration_s * 1000), app.quit)
+        tb.show_preview()
+        print("[INFO] Starting transmission with QT preview. Keep analyzer protection enabled for the first low-power observation.")
+    else:
+        print("[INFO] Starting transmission. Keep analyzer protection enabled for the first low-power observation.")
+
     tb.start()
     try:
-        if config.duration_s is not None:
+        if app is not None:
+            app.exec_()
+        elif config.duration_s is not None:
             time.sleep(config.duration_s)
         else:
             while True:
@@ -83,6 +116,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\n[INFO] Stopping transmission on user request.")
     finally:
+        tb.close_preview()
         tb.stop()
         tb.wait()
 
