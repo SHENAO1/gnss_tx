@@ -5,7 +5,9 @@ from typing import Iterable, Sequence
 
 import numpy as np
 
+# GPS L1 C/A 导航电文速率为 50 bps。
 NAV_BIT_RATE_BPS = 50
+# 每个导航 bit 覆盖 20 个 C/A 码周期，即 20 ms。
 CA_EPOCHS_PER_NAV_BIT = 20
 DEFAULT_NAV_PATTERN = (1, -1, 1, 1, -1, -1, 1, -1)
 
@@ -29,6 +31,11 @@ def _normalize_one_bit(token: str | int) -> int:
 def normalize_nav_bits(nav_pattern: Sequence[str | int] | str | None = None) -> np.ndarray:
     """
     Normalize nav bits to a 1-D int8 array in +/-1 representation.
+
+    物理意义：
+    - 导航层输入可能写成 1/0、+1/-1 或字符串。
+    - 在扩频链路中统一转成 +/-1 之后，才能与 PRN chip 相乘，
+      形成最终的 spread chip。
     """
     if nav_pattern is None:
         tokens: Iterable[str | int] = DEFAULT_NAV_PATTERN
@@ -61,6 +68,7 @@ class CyclicNavBitSource:
         object.__setattr__(self, "bits", bit_array)
 
     def bit_at(self, index: int) -> int:
+        # 当前工程使用循环导航 bit 源，便于长时间回放时保持模式重复。
         return int(self.bits[index % self.bits.size])
 
     def as_array(self) -> np.ndarray:

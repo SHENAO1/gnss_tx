@@ -21,7 +21,10 @@ class TxRuntimeConfig:
     signal_mode: str = "spread"
     usrp_addr: str = "type=b200"
     center_freq: float = 100e6
+    # sample_rate 是数字基带 sample 的时钟速率。
+    # 对 spread 模式，当前要求它严格等于 1.023e6 * samples_per_chip。
     sample_rate: float = 4.092e6
+    # 每个 chip 对应的 sample 个数，决定 chip -> sample 的离散展开比例。
     samples_per_chip: int = 4
     tx_gain: float | None = None
     amplitude: float = 0.25
@@ -33,8 +36,11 @@ class TxRuntimeConfig:
     enable_qt_preview: bool = False
     duration_s: float | None = None
     continuous: bool = True
+    # 初始码相位：从 PRN 周期中的哪个 chip 开始发射。
     initial_code_phase: int = 0
+    # 初始导航 bit 内部的 C/A epoch 偏移。
     initial_nav_epoch: int = 0
+    # 初始导航 bit 索引。
     initial_nav_bit_index: int = 0
 
     def validate(self) -> "TxRuntimeConfig":
@@ -58,6 +64,8 @@ class TxRuntimeConfig:
             raise ValueError("tone_offset_hz must lie strictly within +/- sample_rate/2.")
 
         if self.signal_mode == "spread":
+            # 扩频模式中，数字 sample 速率必须与 chip 速率严格匹配，
+            # 否则 bit -> chip -> sample 的时间对应关系会失真。
             derived_rate = GPS_CA_CHIP_RATE * self.samples_per_chip
             if abs(self.sample_rate - derived_rate) > 1e-6:
                 raise ValueError(
@@ -90,6 +98,7 @@ class TxRuntimeConfig:
 def load_tx_runtime_config(path: str | Path) -> TxRuntimeConfig:
     raw = load_yaml_file(path)
     if "sample_rate" not in raw and "samples_per_chip" in raw:
+        # 若配置文件只给出 chip 级离散参数，则派生出对应的 sample_rate。
         raw["sample_rate"] = GPS_CA_CHIP_RATE * int(raw["samples_per_chip"])
     if "bandwidth" not in raw and "sample_rate" in raw:
         raw["bandwidth"] = float(raw["sample_rate"])
@@ -242,6 +251,7 @@ def is_b210_available() -> bool:
 
 
 def build_tx_top_block(config: TxRuntimeConfig) -> GpsL1CaTxTopBlock:
+    # 先构造硬件 sink，再把 GNU Radio replay source 与其连接成完整发送链。
     sink = create_b210_sink(config.to_block_config())
     return GpsL1CaTxTopBlock(config=config.to_block_config(), sink_block=sink)
 

@@ -25,7 +25,16 @@
 - 安全基线配置：[`configs/tx_b210.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210.yaml)
 - 可见谱复现配置：[`configs/tx_b210_visible_spectrum.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
 
-建议保留安全基线配置作为默认起点；当你需要复现“已经看见的宽带包络”时，使用可见谱配置。
+建议保留安全基线配置作为默认起点；当你需要复现或继续观察宽带包络时，使用可见谱配置。
+
+当前仓库里建议把这三类信息区分开：
+
+- `configs/tx_b210.yaml`
+  - Python runtime 的默认安全基线。
+- `configs/tx_b210_visible_spectrum.yaml`
+  - 当前 runtime / Ubuntu bring-up 的可见谱配置。
+- [`experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md`](/home/shen/projects/gnss_tx/experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md)
+  - 历史实验检查点，记录的是当日的实验事实。
 
 ## 推荐排障顺序
 

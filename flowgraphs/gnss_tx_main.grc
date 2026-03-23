@@ -3,7 +3,7 @@ options:
     author: ''
     category: Custom
     cmake_opt: ''
-    comment: 'PRN1 spread-spectrum buffered transmit flowgraph for B210 + spectrum analyzer precheck.'
+    comment: 'PRN1 spread-spectrum continuous transmit mirror flowgraph for B210, QT preview, and lab bring-up.'
     copyright: ''
     description: ''
     gen_cmake: 'Off'
@@ -69,7 +69,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '0.25'
+    value: '1.0'
   states:
     coordinate: [440, 24]
     rotation: 0
@@ -96,7 +96,7 @@ blocks:
   id: note
   parameters:
     comment: ''
-    note: "v1 only supports PRN1.\nThis flowgraph replays a precomputed spread-spectrum buffer to reduce USRP underflows.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nStart with minimum TX gain and low amplitude.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm."
+    note: "PRN1 only. This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: PRN1 GPS L1 C/A spread-spectrum BPSK complex baseband, not a tone and not a full GNSS navigation transmitter.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
   states:
     coordinate: [840, 20]
     rotation: 0

@@ -34,22 +34,31 @@ _TopBlockBase = gr.top_block if HAVE_GNURADIO else object
 
 @dataclass(frozen=True)
 class TxBlockConfig:
+    # 当前只实现 PRN1，但保留 prn_id 作为后续多 PRN 扩展入口。
     prn_id: int = 1
+    # ``spread`` 对应 PRN 扩频发送，``tone`` 对应单音校准发送。
     signal_mode: str = "spread"
+    # 每个 chip 展开为多少个 sample。
+    # 因此 sample_rate = 1.023e6 * samples_per_chip。
     samples_per_chip: int = 4
     amplitude: float = 0.25
     nav_pattern: str | list[int] = "1 0 1 1 0 0 1 0"
     tone_offset_hz: float = 500e3
     tone_buffer_s: float = 0.1
+    # 射频中心频率，对应 USRP 本振输出中心。
     center_freq: float = 100e6
+    # 基带采样率，决定数字 sample 输出速度。
     sample_rate: float = 4.092e6
     tx_gain: float | None = None
     bandwidth: float | None = None
     antenna: str = "TX/RX"
     usrp_addr: str = "type=b200"
     enable_qt_preview: bool = False
+    # 初始码相位，对应 C/A 周期内部从哪个 chip 开始发。
     initial_code_phase: int = 0
+    # 初始导航 bit 内部的 1 ms epoch 偏移。
     initial_nav_epoch: int = 0
+    # 初始导航 bit 索引。
     initial_nav_bit_index: int = 0
 
 
@@ -126,6 +135,11 @@ def build_replay_samples(
     Repeating a whole nav-pattern period keeps the loop boundary aligned to both
     the 1 ms C/A epoch and the 20 ms navigation-bit epoch, avoiding the
     discontinuities caused by restarting mid-pattern.
+
+    物理意义：
+    - 这里生成的是“可循环回放的完整基带片段”。
+    - 长度按完整 nav pattern 周期来定，而不是随便截一段。
+    - 这样 replay 到边界时，导航 bit 相位和 PRN 码相位都能无缝衔接。
     """
     nav_bits = normalize_nav_bits(nav_pattern)
     epochs_per_buffer = CA_EPOCHS_PER_NAV_BIT * len(nav_bits)
@@ -150,6 +164,8 @@ def build_tone_replay_samples(
     tone_offset_hz: float = 500e3,
     tone_buffer_s: float = 0.1,
 ) -> np.ndarray:
+    # 单音模式不经过 nav bit 和 PRN 扩频链，
+    # 直接生成复指数基带作为硬件链路校准信号。
     return generate_complex_tone(
         sample_rate=sample_rate,
         tone_freq=tone_offset_hz,
@@ -205,6 +221,9 @@ def make_tone_vector_source(
 class GpsL1CaSourceBlock(_SyncBlockBase):
     """
     GNU Radio source block wrapper around the pure Python PRN/state machine.
+
+    该块直接从 Python 状态机逐批生成 sample，适合理解信号处理链。
+    当前运行时主链为了降低 underflow 风险，更多使用预生成 replay buffer。
     """
 
     def __init__(
@@ -253,6 +272,10 @@ class GpsL1CaSourceBlock(_SyncBlockBase):
 class GpsL1CaTxTopBlock(_TopBlockBase):
     """
     Minimal runtime flowgraph for PRN1 spread-spectrum transmission.
+
+    数据流总览：
+    - spread 模式：nav bit -> PRN chip -> spread chip -> sample -> replay source -> 幅度缩放 -> USRP
+    - tone 模式：tone sample -> replay source -> 幅度缩放 -> USRP
     """
 
     def __init__(self, config: TxBlockConfig, sink_block=None) -> None:
@@ -267,6 +290,7 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
         self.qt_time_sink = None
         self.qt_freq_sink = None
         if config.signal_mode == "tone":
+            # 单音链路：直接预生成一段复数单音 sample，再循环回放。
             self.replay_samples = build_tone_replay_samples(
                 sample_rate=config.sample_rate,
                 amplitude=1.0,
@@ -274,6 +298,8 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
                 tone_buffer_s=config.tone_buffer_s,
             )
         else:
+            # 扩频链路：先在 Python 中生成完整的扩频 sample 缓冲区，
+            # 再交给 GNU Radio 做稳定回放。
             self.replay_samples = build_replay_samples(
                 prn_id=config.prn_id,
                 samples_per_chip=config.samples_per_chip,
@@ -283,7 +309,9 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
                 initial_nav_epoch=config.initial_nav_epoch,
                 initial_nav_bit_index=config.initial_nav_bit_index,
             )
+        # GNU Radio 运行时实际看到的源是一个循环的复数 sample 序列。
         self.source = blocks.vector_source_c(self.replay_samples.tolist(), True, 1, [])
+        # 将“单位幅度 replay 样本”缩放为最终发射幅度。
         self.multiply_const = blocks.multiply_const_cc(config.amplitude)
         self.sink_block = sink_block
 
@@ -295,6 +323,7 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
             self.connect(self.multiply_const, self.qt_time_sink)
             self.connect(self.multiply_const, self.qt_freq_sink)
         if sink_block is not None:
+            # 最终把缩放后的 complex baseband sample 送入 USRP sink。
             self.connect(self.multiply_const, sink_block)
 
     def set_amplitude(self, amplitude: float) -> None:

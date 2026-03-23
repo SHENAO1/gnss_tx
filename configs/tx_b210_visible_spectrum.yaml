@@ -1,5 +1,6 @@
-# Visible-spectrum profile validated on the spectrum analyzer:
+# Visible-spectrum runtime profile:
 # - Intended for reproducible observation of the PRN1 spread-spectrum envelope
+# - The historical 2026-03-22 checkpoint remains archived under experiments/
 # - Keep the same cable path and analyzer settings when comparing results
 prn_id: 1
 signal_mode: "spread"
@@ -8,11 +9,21 @@ center_freq: 100000000.0
 samples_per_chip: 4
 sample_rate: 4092000.0
 tx_gain: 10.0
-amplitude: 0.5
+amplitude: 1.0
 antenna: "TX/RX"
 bandwidth: 4092000.0
 nav_pattern: "1 0 1 1 0 0 1 0"
+
+# 仅在 signal_mode: "tone" 时生效：
+# - tone_offset_hz 表示单音相对 center_freq 的频偏
+# - 例如 center_freq=100 MHz 且 tone_offset_hz=500 kHz 时，单音会出现在 100.5 MHz
+# - 该值必须满足 |tone_offset_hz| < sample_rate / 2
 tone_offset_hz: 500000.0
+# 仅在 signal_mode: "tone" 时生效：
+# - tone_buffer_s 表示预生成单音缓冲区的时长，单位为秒
+# - 程序会先生成这段长度的单音样本，再循环回放
+# - 它不是总发射时长；总发射时长由 duration_s 或手动停止决定
+
 tone_buffer_s: 0.1
 duration_s: null
 continuous: true

@@ -2,11 +2,16 @@ from pathlib import Path
 import sys
 import numpy as np
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_PATH = PROJECT_ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
 from gnss_tx import __version__, PROJECT_NAME
 
 
 def main():
-    project_root = Path(__file__).resolve().parents[1]
+    project_root = PROJECT_ROOT
 
     print("=" * 60)
     print("Quick Check: GNSS TX Project")
