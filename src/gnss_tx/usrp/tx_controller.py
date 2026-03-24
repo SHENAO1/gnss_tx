@@ -250,6 +250,51 @@ def is_b210_available() -> bool:
     return "no uhd devices found" not in lowered and "device" in lowered
 
 
+def read_uhd_sink_sample_rate(sink) -> float | None:
+    if sink is None:
+        return None
+
+    getter = getattr(sink, "get_samp_rate", None)
+    if getter is None:
+        return None
+
+    try:
+        return float(getter())
+    except (RuntimeError, TypeError, ValueError):
+        return None
+
+
+def format_uhd_tx_sample_rate_report(
+    requested_sample_rate: float,
+    sink,
+    *,
+    label: str = "USRP TX channel 0",
+) -> str:
+    requested = float(requested_sample_rate)
+    actual = read_uhd_sink_sample_rate(sink)
+    requested_samples_per_chip = requested / GPS_CA_CHIP_RATE
+
+    lines = [
+        f"[INFO] {label} requested sample rate : {requested:.3f} Sps ({requested / 1e6:.6f} Msps)",
+        f"[INFO] {label} requested samples/chip: {requested_samples_per_chip:.6f}",
+    ]
+    if actual is None:
+        lines.append(f"[WARN] {label} actual sample-rate readback is unavailable.")
+        return "\n".join(lines)
+
+    actual_samples_per_chip = actual / GPS_CA_CHIP_RATE
+    delta = actual - requested
+    delta_ratio = delta / requested if requested else 0.0
+    lines.extend(
+        [
+            f"[INFO] {label} actual sample rate    : {actual:.3f} Sps ({actual / 1e6:.6f} Msps)",
+            f"[INFO] {label} actual samples/chip   : {actual_samples_per_chip:.6f}",
+            f"[INFO] {label} sample-rate delta     : {delta:+.3f} Sps ({delta_ratio:+.6%})",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def build_tx_top_block(config: TxRuntimeConfig) -> GpsL1CaTxTopBlock:
     # 先构造硬件 sink，再把 GNU Radio replay source 与其连接成完整发送链。
     sink = create_b210_sink(config.to_block_config())
@@ -268,7 +313,9 @@ __all__ = [
     "format_config_report",
     "format_lab_table_summary",
     "format_observation_checklist",
+    "format_uhd_tx_sample_rate_report",
     "is_b210_available",
     "load_tx_runtime_config",
+    "read_uhd_sink_sample_rate",
     "uhd_find_devices_output",
 ]

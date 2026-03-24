@@ -18,6 +18,7 @@ from gnss_tx.usrp import (
     format_config_report,
     format_lab_table_summary,
     format_observation_checklist,
+    format_uhd_tx_sample_rate_report,
     is_b210_available,
     load_tx_runtime_config,
     uhd_find_devices_output,
@@ -111,6 +112,7 @@ def main() -> int:
 
     tb.start()
     try:
+        print(format_uhd_tx_sample_rate_report(config.sample_rate, tb.sink_block, label="Python TX runtime"))
         if app is not None:
             app.exec_()
         elif config.duration_s is not None:

@@ -9,8 +9,10 @@ from gnss_tx.usrp.tx_controller import (
     format_config_report,
     format_lab_table_summary,
     format_observation_checklist,
+    format_uhd_tx_sample_rate_report,
     is_b210_available,
     load_tx_runtime_config,
+    read_uhd_sink_sample_rate,
     uhd_find_devices_output,
 )
 
@@ -26,7 +28,9 @@ __all__ = [
     "format_config_report",
     "format_lab_table_summary",
     "format_observation_checklist",
+    "format_uhd_tx_sample_rate_report",
     "is_b210_available",
     "load_tx_runtime_config",
+    "read_uhd_sink_sample_rate",
     "uhd_find_devices_output",
 ]

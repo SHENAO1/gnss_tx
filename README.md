@@ -26,5 +26,40 @@
 - `docs/`：设计文档与报告
 - `env/`：环境配置说明
 
+## GNU Radio 一键启动
+
+### 启动方式
+
+| 命令 | 说明 |
+|------|------|
+| `./scripts/run_gnss_tx_grc.sh` | 用 GRC 打开主流图（可视化编辑，推荐） |
+| `./scripts/run_gnss_tx_grc.sh --companion` | 同上（显式指定） |
+| `./scripts/run_gnss_tx_grc.sh --run` | 直接运行主流图（跳过 GRC 界面） |
+| `./scripts/run_gnss_tx_grc.sh --run --headless` | 无显示环境下直接运行 |
+
+### 为什么必须通过脚本打开 GRC
+
+本项目使用了两个自定义 GRC block：
+
+- `gnss_tx_gps_l1_ca_source`（位于 `grc/blocks/`）
+- `gnss_tx_usrp_sink`（位于 `grc/blocks/`）
+
+GRC 需要通过环境变量 `GRC_BLOCKS_PATH` 才能找到这些 block 的定义文件（`.block.yml`）。
+脚本会在启动前自动设置该变量：
+
+```
+GRC_BLOCKS_PATH=/usr/share/gnuradio/grc/blocks:/path/to/project/grc/blocks
+```
+
+**直接双击 `.grc` 文件或裸调 `gnuradio-companion` 会导致自定义 block 显示为未知，无法运行。**
+
+### 在 GRC 界面内点击运行按钮
+
+通过脚本打开 GRC 后，可以直接点击右上角运行按钮（▶）运行流图，无需切回终端再执行 `--run`。
+
+> **注意**：GRC 点击运行时会将生成的 Python 文件写到项目根目录（而非 `flowgraphs/`），
+> block 模板中的路径检测逻辑已处理该情况，会向上逐级查找包含 `src/gnss_tx/` 的目录。
+> 如果看到 `ModuleNotFoundError: gnss_tx`，请确认是通过脚本启动的 GRC，而非直接启动。
+
 ## 当前阶段
 阶段 1：目录初始化与 Git 建库
