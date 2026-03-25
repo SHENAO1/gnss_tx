@@ -85,6 +85,8 @@ grc/
 必须使用项目提供的启动脚本，它会在启动前设置 `GRC_BLOCKS_PATH` 环境变量：
 
 ```bash
+cd ~/projects/gnss_tx
+
 # 在 GRC 界面中打开流图（默认）
 bash scripts/run_gnss_tx_grc.sh
 

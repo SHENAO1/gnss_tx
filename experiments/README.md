@@ -31,6 +31,41 @@
    - 把当天过程和结论写入 archive。
    - 把扫描过程补到 draft、checklist 和 CSV。
 
+## Ubuntu 命令行快速入口
+
+以下命令可直接在 Ubuntu 终端执行，建议都在项目根目录下运行：
+
+```bash
+cd ~/projects/gnss_tx
+source .venv/bin/activate
+
+# 1) 检查 Python 环境和项目结构
+PYTHONPATH=src python3 scripts/quick_check.py
+
+# 2) 先做 dry-run，确认配置、UHD 设备发现和实验摘要
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --dry-run \
+    --config configs/tx_b210.yaml
+
+# 3) 启动当前可见谱扩频发射组合
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_visible_spectrum.yaml \
+    --duration 30
+
+# 4) 打开 GNU Radio Companion 主流图
+bash scripts/run_gnss_tx_grc.sh
+
+# 5) 生成参数扫描实验清单和 CSV
+PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
+```
+
+如果当前终端还没有激活虚拟环境，先执行：
+
+```bash
+cd ~/projects/gnss_tx
+source .venv/bin/activate
+```
+
 ## Python runtime 与 GRC 的分工
 
 - Python runtime
