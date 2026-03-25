@@ -813,4 +813,376 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 1. 统一配置、测试、文档语义。
 2. 补齐真实导航电文与子帧构造。
 3. 扩展多 PRN 与更严格的时间/频率控制。
-4. 建立从“可见谱”到“可捕获/可解调”的验证闭环。
+4. 建立从”可见谱”到”可捕获/可解调”的验证闭环。
+
+---
+
+## 10. 模块实现参考手册
+
+### 10.1 `ca/` — C/A 码生成层
+
+#### `prn_generator.py`
+
+| 符号 | 类型 | 说明 |
+|------|------|------|
+| `CA_CODE_LENGTH` | `int = 1023` | 每个 C/A 码周期的 chip 数，对应 1 ms 码周期 |
+| `generate_ca_code(prn_id)` | `ndarray[int8]` | 生成 PRN1 的 1023 chip C/A 码，输出 +1/-1 表示 |
+
+实现原理：
+- 采用两个 10 级 LFSR（G1、G2），初值全 1。
+- G1 反馈多项式：`x^3 ^ x^10`（对应抽头 3、10）。
+- G2 反馈多项式：`x^2 ^ x^3 ^ x^6 ^ x^8 ^ x^9 ^ x^10`。
+- PRN1 的 G2 输出抽头为第 2、6 位的异或。
+- 当前仅实现 PRN1，其他 PRN 会抛出 `NotImplementedError`。
+
+#### `resampler.py`
+
+| 符号 | 类型 | 说明 |
+|------|------|------|
+| `repeat_chips(chips, samples_per_chip)` | `ndarray[int8]` | 将 chip 序列按倍数展开为 sample 序列（`numpy.repeat`） |
+
+---
+
+### 10.2 `nav/` — 导航比特层
+
+#### `nav_bits.py`
+
+| 符号 | 类型 | 说明 |
+|------|------|------|
+| `NAV_BIT_RATE_BPS` | `int = 50` | GPS L1 C/A 导航电文比特率 |
+| `CA_EPOCHS_PER_NAV_BIT` | `int = 20` | 每个导航 bit 覆盖的 1 ms C/A 码周期数 |
+| `DEFAULT_NAV_PATTERN` | `tuple` | 默认导航 bit 循环模式 `(1,-1,1,1,-1,-1,1,-1)` |
+| `normalize_nav_bits(nav_pattern)` | `ndarray[int8]` | 将 `1/0/+1/-1/字符串` 格式的导航 bit 统一转为 `+1/-1` 表示 |
+| `CyclicNavBitSource` | `dataclass` | 不可变循环导航 bit 源，`bit_at(index)` 按索引取 bit（自动循环） |
+
+输入格式兼容：
+- `”1 0 1 1 0 0 1 0”` — 空格分隔字符串
+- `”10110010”` — 连续字符串
+- `[1, -1, 1, 1, -1, -1, 1, -1]` — 整数列表
+- `[1, 0, 1, 1, 0, 0, 1, 0]` — 整数列表（0 被归一化为 -1）
+
+#### `subframe_builder.py`
+
+**当前为空文件**，按命名应实现真实 GPS NAV 子帧构造，是后续扩展占位模块。
+
+---
+
+### 10.3 `signal/` — 基带信号生成层
+
+#### `spreader.py`
+
+核心类 `GpsL1CaBpskGenerator`：
+
+```
+构造参数：
+  prn_id              int     PRN 编号（当前只支持 1）
+  samples_per_chip    int     每 chip 对应的 sample 数
+  amplitude           float   输出幅度（建议 ≤ 1.0）
+  nav_pattern         list    导航 bit 循环模式
+  initial_code_phase  int     初始码相位 [0, 1022]
+  initial_nav_epoch   int     初始导航 epoch 偏移 [0, 19]
+  initial_nav_bit_index int   初始导航 bit 索引
+```
+
+状态机字段（`GeneratorState`）：
+
+| 字段 | 说明 |
+|------|------|
+| `code_phase` | 当前处于 PRN 周期的第几个 chip [0, 1022] |
+| `nav_epoch_in_bit` | 当前导航 bit 内的第几个 1 ms epoch [0, 19] |
+| `nav_bit_index` | 当前导航 bit 索引（无上限，循环取模） |
+| `sample_phase_in_chip` | 当前 chip 内已输出多少个 sample |
+
+主要方法：
+
+| 方法 | 返回 | 说明 |
+|------|------|------|
+| `generate_chips(num_chips)` | `ndarray[int8]` | 生成 chip 级序列（chip 对齐，用于离线分析） |
+| `generate_samples(num_samples)` | `ndarray[complex64]` | 生成复数基带 sample（支持跨 chip 边界任意截断） |
+
+信号链关系：
+```
+nav_bit[20ms] × ca_chip[1/1.023MHz] = spread_chip → 展开为 samples_per_chip 个 sample
+```
+
+#### `iq_builder.py`
+
+| 函数 | 返回 | 说明 |
+|------|------|------|
+| `generate_complex_tone(sample_rate, tone_freq, duration_s, amplitude)` | `ndarray[complex64]` | 生成 `A·exp(j2πft/fs)` 复指数基带单音，用于硬件链路校准 |
+
+#### `modulator.py`
+
+| 函数 | 返回 | 说明 |
+|------|------|------|
+| `chips_to_complex_baseband(chips, amplitude)` | `ndarray[complex64]` | 将 +/-1 chip 序列映射为 complex64（I 支路 BPSK，Q=0） |
+
+---
+
+### 10.4 `gr/` — GNU Radio 装配层
+
+#### `top_block.py`
+
+**`TxBlockConfig`**（frozen dataclass）：
+
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| `prn_id` | `1` | PRN 编号 |
+| `signal_mode` | `”spread”` | `”spread”` 或 `”tone”` |
+| `samples_per_chip` | `4` | chip → sample 展开比 |
+| `amplitude` | `0.25` | 最终发射幅度 |
+| `nav_pattern` | `”1 0 1 1 0 0 1 0”` | 导航 bit 循环模式 |
+| `tone_offset_hz` | `500e3` | 单音相对中心频率的频偏（仅 tone 模式） |
+| `tone_buffer_s` | `0.1` | 预生成单音缓冲时长（仅 tone 模式） |
+| `center_freq` | `100e6` | 射频中心频率 Hz |
+| `sample_rate` | `4.092e6` | 基带采样率 Sps |
+| `tx_gain` | `None` | 发射增益 dB（None 则取设备最小增益） |
+| `bandwidth` | `None` | 模拟带宽 Hz |
+| `antenna` | `”TX/RX”` | B210 天线端口 |
+| `usrp_addr` | `”type=b200”` | UHD 设备地址字符串 |
+| `enable_qt_preview` | `False` | 是否启用 QT 时域/频域预览窗口 |
+| `initial_code_phase` | `0` | 初始码相位 |
+| `initial_nav_epoch` | `0` | 初始导航 epoch 偏移 |
+| `initial_nav_bit_index` | `0` | 初始导航 bit 索引 |
+
+**`GpsL1CaTxTopBlock`**（`gr.top_block` 子类）：
+
+流图结构（spread 模式）：
+```
+build_replay_samples() → vector_source_c(repeat=True)
+                       → multiply_const_cc(amplitude)
+                       → [可选] qtgui.time_sink_c
+                       → [可选] qtgui.freq_sink_c
+                       → uhd.usrp_sink
+```
+
+关键设计：replay buffer 长度 = `len(nav_bits) × 20 × 1023 × samples_per_chip`，
+保证回放边界与码相位和导航 bit 相位同时对齐。
+
+**辅助函数**：
+
+| 函数 | 说明 |
+|------|------|
+| `build_replay_samples(**kwargs)` | 预生成完整 nav pattern 周期对齐的扩频 sample buffer |
+| `build_tone_replay_samples(**kwargs)` | 预生成单音 sample buffer |
+| `make_gps_l1_ca_vector_source(**kwargs)` | 构造循环 vector source（供外部流图使用） |
+
+---
+
+### 10.5 `usrp/` — 硬件控制与运行时配置层
+
+#### `b210_sink.py`
+
+| 函数 | 说明 |
+|------|------|
+| `create_b210_sink(config)` | 创建 UHD B210 发射 sink，设置采样率、中心频率、增益、带宽、天线 |
+
+UHD stream 参数：`cpu_format=fc32`（主机侧 complex float），`otw_format=sc16`（USB 线上 16 位整数）。
+
+#### `tx_controller.py`
+
+**`TxRuntimeConfig`**（frozen dataclass）— 运行时参数的完整定义，包含所有 YAML 可配置字段。
+
+关键方法：
+
+| 方法 | 说明 |
+|------|------|
+| `validate()` | 校验参数合法性，包括 `spread` 模式下 `sample_rate == 1.023e6 × samples_per_chip` |
+| `to_block_config()` | 转换为 `TxBlockConfig` 传入 GNU Radio 装配层 |
+
+辅助函数：
+
+| 函数 | 说明 |
+|------|------|
+| `load_tx_runtime_config(path)` | 从 YAML 加载并校验配置 |
+| `apply_overrides(config, **kwargs)` | 合并 CLI 覆盖项并重新派生 `sample_rate`/`bandwidth` |
+| `format_config_report(config)` | 打印运行时参数摘要 |
+| `format_observation_checklist(config)` | 打印频谱仪观察步骤清单 |
+| `format_lab_table_summary(config, device_report)` | 打印实验表格关键字段摘要 |
+| `is_b210_available()` | 调用 `uhd_find_devices` 判断是否有 B210 可用 |
+| `build_tx_top_block(config)` | 创建 B210 sink 并装配完整发射 top block |
+
+---
+
+### 10.6 `utils/` — 工具层
+
+#### `io.py`
+
+| 函数 | 说明 |
+|------|------|
+| `load_yaml_file(path)` | 读取 YAML 文件并返回 `dict`，文件为空时返回 `{}`，非 mapping 格式时报错 |
+
+#### `timebase.py` / `logging.py`
+
+**当前为空文件**，占位用，后续分别实现时基控制和统一日志。
+
+---
+
+## 11. 配置文件参数参考
+
+所有配置文件均为 YAML 格式，位于 `configs/`。字段含义如下：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `prn_id` | int | `1` | PRN 编号（当前仅支持 1） |
+| `signal_mode` | str | `”spread”` | `”spread”`（扩频）或 `”tone”`（单音校准） |
+| `usrp_addr` | str | `”type=b200”` | UHD 设备地址，可用 `”serial=XXXXXXX”` 固定到序列号 |
+| `center_freq` | float | `100e6` | 射频中心频率 Hz |
+| `samples_per_chip` | int | `4` | 每 chip 的 sample 数；决定 `sample_rate = 1.023e6 × samples_per_chip` |
+| `sample_rate` | float | `4.092e6` | 基带采样率 Sps（通常由 `samples_per_chip` 派生，不必手动填） |
+| `tx_gain` | float \| null | `null` | 发射增益 dB，`null` 时取设备最小增益 |
+| `amplitude` | float | `0.25` | 基带幅度 (0, 1]，乘在 replay buffer 上 |
+| `antenna` | str | `”TX/RX”` | B210 天线端口，可选 `”TX/RX”` 或 `”TX/RX2”` 等 |
+| `bandwidth` | float \| null | `null` | 模拟带宽 Hz，`null` 时派生自 `sample_rate` |
+| `nav_pattern` | str | `”1 0 1 1 0 0 1 0”` | 循环导航 bit 模式，空格分隔，0 等价于 -1 |
+| `tone_offset_hz` | float | `500e3` | 单音频偏 Hz（仅 `signal_mode=tone` 生效） |
+| `tone_buffer_s` | float | `0.1` | 单音预生成缓冲时长 s（仅 `tone` 模式） |
+| `duration_s` | float \| null | `null` | 发射时长 s，`null` 为持续发射直到 Ctrl-C |
+| `continuous` | bool | `true` | 持续模式标志（语义上与 `duration_s` 联动） |
+| `initial_code_phase` | int | `0` | 初始码相位 chip 偏移 [0, 1022] |
+| `initial_nav_epoch` | int | `0` | 初始导航 bit 内 epoch 偏移 [0, 19] |
+| `initial_nav_bit_index` | int | `0` | 初始导航 bit 索引 |
+
+**内置配置文件一览**：
+
+| 文件 | 用途 |
+|------|------|
+| `configs/tx_b210.yaml` | 保守安全基线（`tx_gain=0`, `amplitude=0.25`），用于首次连线 RF 检查 |
+| `configs/tx_b210_visible_spectrum.yaml` | 已验证可见谱配置（`tx_gain=10`, `amplitude=1.0`），用于频谱仪观察复现 |
+| `configs/tx_b210_sn8003272.yaml` | 固定序列号 + OTA 配置（`center_freq=150MHz`, `tx_gain=20`），双USRP空收场景 |
+
+---
+
+## 12. 脚本命令参考
+
+所有脚本需在项目根目录下运行，并设置 `PYTHONPATH=src`。
+
+### 12.1 环境快速检查
+
+```bash
+cd /path/to/gnss_tx
+PYTHONPATH=src python3 scripts/quick_check.py
+```
+
+输出：Python 版本、numpy 版本、关键路径检查结果。
+
+### 12.2 主发射脚本 `run_tx.py`
+
+```bash
+# 基本用法（使用默认配置文件）
+PYTHONPATH=src python3 scripts/run_tx.py
+
+# 指定配置文件
+PYTHONPATH=src python3 scripts/run_tx.py --config configs/tx_b210_visible_spectrum.yaml
+
+# 干运行（只打印配置，不启动发射）
+PYTHONPATH=src python3 scripts/run_tx.py --dry-run
+
+# 指定发射时长 20 秒
+PYTHONPATH=src python3 scripts/run_tx.py --duration 20
+
+# 指定中心频率和增益
+PYTHONPATH=src python3 scripts/run_tx.py --center-freq 150e6 --tx-gain 20
+
+# 单音校准模式
+PYTHONPATH=src python3 scripts/run_tx.py --signal-mode tone --tone-offset-hz 500000
+
+# 启用 QT 软件侧频谱预览（需 GNU Radio Qt GUI）
+PYTHONPATH=src python3 scripts/run_tx.py --qt-preview --duration 30
+
+# OTA 双USRP场景：指定发射USRP序列号
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_sn8003272.yaml \
+    --tx-gain 20 --amplitude 1.0 --duration 60
+```
+
+CLI 参数完整列表：
+
+| 参数 | 说明 |
+|------|------|
+| `--config FILE` | YAML 配置文件路径（默认 `configs/tx_b210.yaml`） |
+| `--center-freq HZ` | 射频中心频率 Hz |
+| `--tx-gain DB` | 发射增益 dB |
+| `--sample-rate SPS` | 采样率 Sps（通常由 `samples-per-chip` 派生） |
+| `--samples-per-chip N` | 每 chip sample 数，自动派生采样率 |
+| `--signal-mode {spread,tone}` | 信号模式 |
+| `--nav-pattern STR` | 导航 bit 循环模式字符串 |
+| `--tone-offset-hz HZ` | 单音频偏 Hz |
+| `--duration S` | 发射时长 s |
+| `--amplitude A` | 基带幅度 (0, 1] |
+| `--qt-preview` | 启用 QT 时域/频域预览 |
+| `--dry-run` | 仅打印配置，不启动发射 |
+
+### 12.3 扩频链离线分析 `analyze_prn1_spread.py`
+
+```bash
+# 默认参数（40 ms，samples_per_chip=4）
+PYTHONPATH=src python3 scripts/analyze_prn1_spread.py
+
+# 自定义参数
+PYTHONPATH=src python3 scripts/analyze_prn1_spread.py \
+    --prn-id 1 \
+    --samples-per-chip 4 \
+    --num-ms 40 \
+    --nav-pattern “1 0 1 1 0 0 1 0” \
+    --prefix prn1_spread
+```
+
+输出到 `results/`：
+- `figs/prn1_spread_ca_code.png` — C/A 码波形图
+- `figs/prn1_spread_samples.png` — 扩频基带样本图
+- `figs/prn1_spread_correlation.png` — 1 ms 相关峰图
+- `npy/prn1_spread_ca_code.npy` — C/A 码 numpy 数组
+- `npy/prn1_spread_spread_chips.npy` — 扩频 chips
+- `npy/prn1_spread_spread_samples.npy` — 扩频复基带样本
+- `csv/prn1_spread_preview.csv` — 前 64 chip 对照表
+- `logs/prn1_spread_analysis.txt` — 文本分析报告
+
+### 12.4 单音测试 IQ 生成 `generate_test_iq.py`
+
+```bash
+PYTHONPATH=src python3 scripts/generate_test_iq.py
+```
+
+生成 `results/npy/test_iq_tone.npy`（1 MHz 采样率，50 kHz 单音，10 ms 时长）。
+
+### 12.5 参数扫描实验规划 `plan_tx_visibility_sweep.py`
+
+```bash
+# 使用默认可见谱配置
+PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
+
+# 指定配置文件和输出路径
+PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py \
+    --config configs/tx_b210_visible_spectrum.yaml \
+    --csv-output results/csv/sweep_template.csv \
+    --checklist-output experiments/sweep_checklist.md
+```
+
+生成三份实验文档：
+- CSV 参数模板（每组实验一行）
+- Markdown 勾选清单（含逐步操作指导）
+- Markdown 实验记录草稿（含结果汇总表格）
+
+### 12.6 GNU Radio Companion 启动器 `run_gnss_tx_grc.sh`
+
+```bash
+# 在 GRC 界面中打开主流图（默认）
+bash scripts/run_gnss_tx_grc.sh
+
+# 直接运行流图（跳过 GRC 界面）
+bash scripts/run_gnss_tx_grc.sh --run
+
+# 无显示环境下运行
+bash scripts/run_gnss_tx_grc.sh --run --headless
+```
+
+### 12.7 单元测试
+
+```bash
+# 运行全部测试（使用 unittest）
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+
+# 运行单个测试文件
+PYTHONPATH=src python3 -m unittest tests/test_spreader.py -v
+```
