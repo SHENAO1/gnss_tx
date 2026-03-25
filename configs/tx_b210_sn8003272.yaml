@@ -1,0 +1,23 @@
+# TX 设备固定配置：USRP serial=8003272（空收 OTA 版本）
+# 在 tx_b210_visible_spectrum.yaml 基础上，将 usrp_addr 固定到序列号，
+# 防止双USRP环境下随机选择错误设备。
+# OTA 说明：无衰减器直连，tx_gain 提高至 20 dB 补偿空间路径损耗；
+# 注意 100 MHz 位于 FM 广播频段，如遇强干扰可将 center_freq 改至频段外。
+prn_id: 1
+signal_mode: "spread"
+usrp_addr: "serial=8003272"
+center_freq: 150000000.0
+samples_per_chip: 4
+sample_rate: 4092000.0
+tx_gain: 20.0
+amplitude: 1.0
+antenna: "TX/RX"
+bandwidth: 4092000.0
+nav_pattern: "1 0 1 1 0 0 1 0"
+tone_offset_hz: 500000.0
+tone_buffer_s: 0.1
+duration_s: null
+continuous: true
+initial_code_phase: 0
+initial_nav_epoch: 0
+initial_nav_bit_index: 0
