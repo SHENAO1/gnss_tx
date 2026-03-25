@@ -67,7 +67,7 @@ sudo uhd_images_downloader
 ### Python 虚拟环境
 
 ```bash
-cd /path/to/gnss_tx
+cd ~/projects/gnss_tx
 
 # 方式一：使用项目提供的安装脚本（推荐）
 bash env/ubuntu/setup.sh
@@ -83,12 +83,14 @@ pip install -e .
 激活虚拟环境（后续每次使用前执行）：
 
 ```bash
+cd ~/projects/gnss_tx
 source .venv/bin/activate
 ```
 
 ### 验证安装
 
 ```bash
+cd ~/projects/gnss_tx
 # 检查项目结构与 Python 环境
 PYTHONPATH=src python3 scripts/quick_check.py
 
@@ -100,9 +102,16 @@ uhd_find_devices
 
 ## 快速开始
 
+> **工作目录**：本页所有命令均须在 `gnss_tx` 项目根目录下执行。
+> 打开新终端后先运行：
+> ```bash
+> cd ~/projects/gnss_tx
+> ```
+
 ### 1. 干运行（不启动发射，仅打印配置）
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py --dry-run
 ```
 
@@ -111,6 +120,7 @@ PYTHONPATH=src python3 scripts/run_tx.py --dry-run
 连接 B210 TX/RX 口到频谱仪（加衰减器保护），再运行：
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210.yaml \
     --duration 20
@@ -119,6 +129,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ### 3. 可见谱配置发射（已验证可在频谱仪观察到宽带包络）
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_visible_spectrum.yaml \
     --duration 30
@@ -127,6 +138,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ### 4. 持续发射（按 Ctrl-C 停止）
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_visible_spectrum.yaml
 ```
@@ -136,6 +148,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 在扩频包络不易观察时，先用单音确认 B210 → 同轴 → 频谱仪硬件链路正常：
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py \
     --signal-mode tone \
     --center-freq 100e6 \
@@ -147,6 +160,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ### 6. 启用 QT 软件侧预览
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_visible_spectrum.yaml \
     --qt-preview \
@@ -160,6 +174,8 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 所有 CLI 参数会覆盖配置文件中对应的字段：
 
 ```bash
+cd ~/projects/gnss_tx
+
 # 调整中心频率、增益和幅度
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210.yaml \
@@ -188,6 +204,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 TX 端（USRP serial=8003272）发射，RX 端（第二台 USRP）接收，两台天线相距 0.5~2 m：
 
 ```bash
+cd ~/projects/gnss_tx
 # 使用固定序列号配置，中心频率 150 MHz（FM 频段外）
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_sn8003272.yaml \
@@ -203,6 +220,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ### 扩频链可视化分析
 
 ```bash
+cd ~/projects/gnss_tx
 # 默认参数（40 ms，4 倍过采样）
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py
 
@@ -224,6 +242,7 @@ PYTHONPATH=src python3 scripts/analyze_prn1_spread.py \
 ### 生成测试单音 IQ
 
 ```bash
+cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/generate_test_iq.py
 # 输出：results/npy/test_iq_tone.npy（1 MHz 采样，50 kHz 单音，10 ms）
 ```
@@ -235,6 +254,7 @@ PYTHONPATH=src python3 scripts/generate_test_iq.py
 生成完整实验文档（CSV 参数模板 + Markdown 清单 + 草稿）：
 
 ```bash
+cd ~/projects/gnss_tx
 # 使用默认可见谱配置
 PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
 
@@ -253,9 +273,47 @@ PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py \
 
 ---
 
+## 实际采样率确认
+
+### 为什么实际采样率可能与配置值不同
+
+USRP B210 内部通过分数-N PLL 综合主时钟（典型值 61.44 MHz），再经**整数**插值/抽取链派生基带采样率。调用 `set_samp_rate(4.092e6)` 时，UHD 从所有可用整数分频组合中选最近可达值，使得：
+
+```
+实际采样率 = 主时钟 / 整数分频系数
+```
+
+对于 4.092 MHz（= 1.023 MHz × 4），偏差通常 < 0.01%，但在接收端捕获时，若两端采样率不一致仍会导致码相位漂移，因此每次实验前应确认。
+
+### 查看方式
+
+**方式一：Python 运行时终端（可查看 UHD 确认的实际值）**
+
+`run_tx.py` 在 `tb.start()` 后立即调用 `sink.get_samp_rate()` 读回硬件确认采样率，与请求值对比后打印：
+
+```
+[INFO] Python TX runtime requested sample rate : 4092000.000 Sps (4.092000 Msps)
+[INFO] Python TX runtime requested samples/chip: 4.000000
+[INFO] Python TX runtime actual sample rate    : 4092000.000 Sps (4.092000 Msps)
+[INFO] Python TX runtime actual samples/chip   : 4.000000
+[INFO] Python TX runtime sample-rate delta     : +0.000 Sps (+0.000000%)
+```
+
+若 `sample-rate delta` 不为零，说明硬件采样率发生了舍入，实际 samples/chip 偏离 4.0，码时钟会出现微小漂移。
+
+**方式二：GNU Radio 流图窗口（可查看配置请求值）**
+
+流图窗口**左下角**的 **TX 采样率（配置值）Msps** 标签显示 GRC 变量 `samp_rate`（= `1.023e6 × samples_per_chip`），即发给 UHD 的**请求值**，不是硬件确认的实际值。需配合终端输出确认实际偏差。
+
+> **原理**：`variable_qtgui_label` 块在 GNU Radio Qt GUI 窗口内嵌入一个 Qt 标签控件，值绑定到 GRC 变量 `samp_rate / 1e6`，在流图运行期间实时显示。由于 GRC 变量系统在流图初始化时赋值，此标签只能展示请求值；UHD 硬件确认值需通过 `sink.get_samp_rate()`（终端输出）才能获取。
+
+---
+
 ## GNU Radio Companion
 
 ```bash
+cd ~/projects/gnss_tx
+
 # 打开主流图（GRC 界面）
 bash scripts/run_gnss_tx_grc.sh
 
@@ -274,6 +332,7 @@ bash scripts/run_gnss_tx_grc.sh --run --headless
 ## 单元测试
 
 ```bash
+cd ~/projects/gnss_tx
 # 运行全部单元测试
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 

@@ -8,7 +8,9 @@
 - 中心频率：150 MHz（FM频段外，已规避87.5~108 MHz干扰）
 - TX 增益：20 dB
 - RX 增益：35 dB
-- 采样率：4.092 MHz（PRN1 C/A × 4 采样/chip）
+- 采样率：4.092 MHz（PRN1 C/A × 4 采样/chip，为**配置请求值**）
+
+> **实际采样率确认**：4.092 MHz 是发给 UHD 的请求值（= 1.023 MHz × 4）。USRP B210 通过内部整数分频器对请求值做舍入，实际硬件采样率需通过 `sink.get_samp_rate()` 读回。`run_tx.py` 启动后会立即将请求值与实际值的对比打印到终端——**TX 与 RX 两端实际采样率必须一致，否则会导致码相位漂移、捕获失败**。若发现偏差较大，应同步修改两端配置文件中的 `sample_rate` 字段。
 
 > **注意：100 MHz 位于 FM 广播频段（87.5~108 MHz）。**
 > 室内短距离（1~2 m）测试时，TX 信号强度通常远高于 FM 背景，可正常捕获。
@@ -130,7 +132,10 @@ python3 scripts/run_tx.py --config configs/tx_b210_sn8003272.yaml
 **终端B — 录制 2 秒**
 
 ```bash
- 
+cd /home/shen/projects/GNSS_RX
+PYTHONPATH=src python3 scripts/record_rx.py \
+  --config configs/rx_prn1_sn193982.yaml \
+  --duration 2
 ```
 
 采集完成后，输出文件位于：

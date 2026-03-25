@@ -209,6 +209,22 @@ blocks:
     rotation: 0
     state: enabled
 
+- name: samp_rate_label
+  id: variable_qtgui_label
+  parameters:
+    comment: '配置采样率标签：显示 GRC 变量 samp_rate（请求值）。
+      实际 UHD 硬件确认采样率（经整数分频舍入后）
+      通过 sink.get_samp_rate() 读回，在 run_tx.py 终端打印。'
+    formatter: None
+    gui_hint: 1,0,1,2
+    label: TX 采样率（配置值）Msps
+    type: real
+    value: samp_rate / 1e6
+  states:
+    coordinate: [88, 480]
+    rotation: 0
+    state: enabled
+
 connections:
 - [prn_source, '0', amplitude_scale, '0']
 - [amplitude_scale, '0', qt_time, '0']
