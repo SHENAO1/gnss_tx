@@ -95,7 +95,7 @@ class TestSweepPlanner(unittest.TestCase):
         self.assertIn("100000000.0", text)
         self.assertIn("4092000.0", text)
         self.assertIn("基准确认：先用 `tx_gain = 10`、`amplitude = 0.50`", text)
-        self.assertIn("实验表格参数摘要", text)
+        self.assertIn("PRN1 C/A 扩频缓冲回放", text)
         self.assertIn("稳定性", text)
 
 

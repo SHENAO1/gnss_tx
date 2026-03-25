@@ -47,7 +47,7 @@ def build_baseline_case() -> SweepCase:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="生成 PRN1 可见谱参数扫描模板、勾选清单和实验记录草稿。")
+    parser = argparse.ArgumentParser(description="生成单星可选 PRN 的可见谱参数扫描模板、勾选清单和实验记录草稿。")
     parser.add_argument(
         "--config",
         default="configs/tx_b210_visible_spectrum.yaml",
@@ -69,6 +69,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="实验记录草稿输出路径。默认按当天日期生成到 experiments/ 目录。",
     )
     return parser
+
+
+def spread_generation_label(prn_id: int) -> str:
+    return f"PRN{prn_id} C/A 扩频缓冲回放"
 
 
 def build_stage1_cases() -> list[SweepCase]:
@@ -115,6 +119,7 @@ def build_stage3_cases(
 
 def write_template_csv(output_path: Path, config_path: Path) -> None:
     config = load_tx_runtime_config(config_path)
+    generation_label = spread_generation_label(config.prn_id)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
@@ -167,7 +172,7 @@ def write_template_csv(output_path: Path, config_path: Path) -> None:
                 f"{baseline.amplitude:.2f}",
                 "是",
                 "否",
-                "PRN1 C/A 扩频缓冲回放",
+                generation_label,
                 f"{DEFAULT_SPAN_HZ}",
                 f"{DEFAULT_RBW_HZ}",
                 f"{DEFAULT_VBW_HZ}",
@@ -198,7 +203,7 @@ def write_template_csv(output_path: Path, config_path: Path) -> None:
                     f"{case.amplitude:.2f}",
                     "是",
                     "否",
-                    "PRN1 C/A 扩频缓冲回放",
+                    generation_label,
                     f"{DEFAULT_SPAN_HZ}",
                     f"{DEFAULT_RBW_HZ}",
                     f"{DEFAULT_VBW_HZ}",
@@ -229,7 +234,7 @@ def write_template_csv(output_path: Path, config_path: Path) -> None:
                     case["amplitude"],
                     "是",
                     "否",
-                    "PRN1 C/A 扩频缓冲回放",
+                    generation_label,
                     f"{DEFAULT_SPAN_HZ}",
                     f"{DEFAULT_RBW_HZ}",
                     f"{DEFAULT_VBW_HZ}",
@@ -260,7 +265,7 @@ def write_template_csv(output_path: Path, config_path: Path) -> None:
                     case["amplitude"],
                     "是",
                     "否",
-                    "PRN1 C/A 扩频缓冲回放",
+                    generation_label,
                     f"{DEFAULT_SPAN_HZ}",
                     f"{DEFAULT_RBW_HZ}",
                     f"{DEFAULT_VBW_HZ}",
@@ -276,10 +281,11 @@ def write_template_csv(output_path: Path, config_path: Path) -> None:
 
 def write_checklist(output_path: Path, config_path: Path) -> None:
     config = load_tx_runtime_config(config_path)
+    generation_label = spread_generation_label(config.prn_id)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     lines = [
-        "# PRN1 发射参数试验清单",
+        f"# PRN{config.prn_id} 发射参数试验清单",
         "",
         "## 实验前准备",
         "- [ ] 确认 B210 已连接并可被 `uhd_find_devices` 识别",
@@ -293,6 +299,7 @@ def write_checklist(output_path: Path, config_path: Path) -> None:
         f"- [ ] `center_freq = {config.center_freq}`",
         f"- [ ] `sample_rate = {config.sample_rate}`",
         f"- [ ] `samples_per_chip = {config.samples_per_chip}`",
+        f"- [ ] `prn_id = {config.prn_id}`",
         f"- [ ] `antenna = {config.antenna}`",
         "- [ ] 使用同一台频谱仪、同一根线缆、同一组基础显示参数",
         "",
@@ -388,9 +395,10 @@ def write_checklist(output_path: Path, config_path: Path) -> None:
 
 def write_draft(output_path: Path, config_path: Path) -> None:
     config = load_tx_runtime_config(config_path)
+    generation_label = spread_generation_label(config.prn_id)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
-        f"# {date.today().isoformat()} PRN1 发射参数试验记录草稿",
+        f"# {date.today().isoformat()} PRN{config.prn_id} 发射参数试验记录草稿",
         "",
         "## 基本信息",
         f"- 实验日期：`{date.today().isoformat()}`",
@@ -403,6 +411,7 @@ def write_draft(output_path: Path, config_path: Path) -> None:
         f"- `center_freq = {config.center_freq}`",
         f"- `sample_rate = {config.sample_rate}`",
         f"- `samples_per_chip = {config.samples_per_chip}`",
+        f"- `prn_id = {config.prn_id}`",
         f"- `antenna = {config.antenna}`",
         f"- `nav_pattern = {config.nav_pattern}`",
         "",
@@ -436,7 +445,7 @@ def write_draft(output_path: Path, config_path: Path) -> None:
         "- 稳定性：`稳定 / 边缘 / 不稳定`",
         "- 是否归一化：`是`",
         "- 是否直流偏置：`否`",
-        "- 生成方式：`PRN1 C/A 扩频缓冲回放`",
+        f"- 生成方式：`{generation_label}`",
         "",
         "## 基准确认",
         "",

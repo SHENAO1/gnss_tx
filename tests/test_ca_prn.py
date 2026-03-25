@@ -1,17 +1,17 @@
 """PRN 码生成相关单元测试。
 
-本模块用于验证 GPS L1 C/A PRN1 码生成器的基础正确性，包括：
+本模块用于验证 GPS L1 C/A PRN 码生成器的基础正确性，包括：
 - 码长、数据类型与符号集合是否合法
 - PRN 码是否满足近似平衡特性
 - 周期自相关峰值是否出现在零移位
-- 当前 v1 是否正确限制为仅支持 PRN1
+- PRN 取值范围与不同 PRN 之间的区分是否合理
 """
 
 import unittest
 
 import numpy as np
 
-from gnss_tx.ca.prn_generator import CA_CODE_LENGTH, generate_ca_code
+from gnss_tx.ca.prn_generator import CA_CODE_LENGTH, SUPPORTED_PRN_IDS, generate_ca_code
 
 
 class TestCaPrnGenerator(unittest.TestCase):
@@ -85,24 +85,32 @@ class TestCaPrnGenerator(unittest.TestCase):
         self.assertEqual(int(correlations[0]), CA_CODE_LENGTH)
         self.assertLessEqual(int(np.max(np.abs(correlations[1:]))), 65)
 
-    def test_unknown_prn_is_rejected_in_v1(self) -> None:
-        """验证 v1 对未实现 PRN 编号的拒绝行为。
+    def test_supported_prns_share_common_shape_rules(self) -> None:
+        for prn_id in (1, 2, 7, 32):
+            code = generate_ca_code(prn_id)
+            self.assertEqual(code.shape, (CA_CODE_LENGTH,))
+            self.assertEqual(code.dtype, np.int8)
+            self.assertTrue(np.all(np.isin(code, (-1, 1))))
+            self.assertEqual(abs(int(code.sum())), 1)
 
-        功能说明：
-        - 验证当前版本只支持 PRN1。
-        - 当输入未实现的 PRN 编号时，应抛出 `NotImplementedError`。
+    def test_different_prns_produce_distinct_codes_with_bounded_cross_correlation(self) -> None:
+        code_1 = generate_ca_code(1).astype(np.int32)
+        code_7 = generate_ca_code(7).astype(np.int32)
 
-        输入参数说明：
-        - 无显式输入参数。
-        - 测试数据来源为测试内部构造的 `PRN=2`。
+        self.assertFalse(np.array_equal(code_1, code_7))
+        periodic_cross = np.array(
+            [int(np.dot(code_1, np.roll(code_7, shift))) for shift in range(CA_CODE_LENGTH)],
+            dtype=np.int32,
+        )
+        self.assertLessEqual(int(np.max(np.abs(periodic_cross))), 65)
 
-        输出说明：
-        - 无返回值。
-        - 期望行为是函数抛出 `NotImplementedError`。
-        """
-        # 校验未实现的 PRN 编号会被显式拒绝。
-        with self.assertRaises(NotImplementedError):
-            generate_ca_code(2)
+    def test_prn_range_rejects_values_outside_supported_table(self) -> None:
+        self.assertEqual(SUPPORTED_PRN_IDS[0], 1)
+        self.assertEqual(SUPPORTED_PRN_IDS[-1], 32)
+        with self.assertRaises(ValueError):
+            generate_ca_code(0)
+        with self.assertRaises(ValueError):
+            generate_ca_code(33)
 
 
 if __name__ == "__main__":

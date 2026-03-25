@@ -65,6 +65,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 | 参数 | 类型 | 说明 |
 |------|------|------|
 | `--config` | 路径 | YAML 配置文件（默认 `configs/tx_b210.yaml`） |
+| `--prn-id` | int | 目标 PRN 编号（当前支持 1~32） |
 | `--center-freq` | float | 射频中心频率（Hz） |
 | `--tx-gain` | float | TX 增益（dB） |
 | `--sample-rate` | float | 基带采样率（Hz） |
@@ -84,23 +85,24 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ```bash
 cd ~/projects/gnss_tx
 
-# 默认参数（40 ms，4 倍过采样）
+# 默认参数（40 ms，4 倍过采样，PRN1）
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py
 
-# 自定义
+# 自定义 PRN 与输出前缀
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py \
+    --prn-id 7 \
     --num-ms 80 \
     --samples-per-chip 4 \
     --amplitude 1.0 \
-    --prefix prn1_spread
+    --prefix prn7_spread
 ```
 
 输出到 `results/`：
-- `figs/prn1_spread_ca_code.png` — PRN1 C/A 码波形（前 128 chip）
-- `figs/prn1_spread_samples.png` — 扩频基带样本（前 16 chip）
-- `figs/prn1_spread_correlation.png` — 1 ms 自相关峰
-- `npy/prn1_spread_*.npy` — numpy 数组
-- `logs/prn1_spread_analysis.txt` — 文本报告
+- `figs/prn{n}_spread_ca_code.png` — 目标 PRN 的 C/A 码波形（前 128 chip）
+- `figs/prn{n}_spread_samples.png` — 扩频基带样本（前 16 chip）
+- `figs/prn{n}_spread_correlation.png` — 1 ms 自相关峰
+- `npy/prn{n}_spread_*.npy` — numpy 数组
+- `logs/prn{n}_spread_analysis.txt` — 文本报告
 
 ---
 

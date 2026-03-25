@@ -34,7 +34,7 @@ _TopBlockBase = gr.top_block if HAVE_GNURADIO else object
 
 @dataclass(frozen=True)
 class TxBlockConfig:
-    # 当前只实现 PRN1，但保留 prn_id 作为后续多 PRN 扩展入口。
+    # 当前支持 GPS L1 C/A PRN1~32 的单星发送。
     prn_id: int = 1
     # ``spread`` 对应 PRN 扩频发送，``tone`` 对应单音校准发送。
     signal_mode: str = "spread"
@@ -271,7 +271,7 @@ class GpsL1CaSourceBlock(_SyncBlockBase):
 
 class GpsL1CaTxTopBlock(_TopBlockBase):
     """
-    Minimal runtime flowgraph for PRN1 spread-spectrum transmission.
+    Minimal runtime flowgraph for single-satellite GPS L1 C/A transmission.
 
     数据流总览：
     - spread 模式：nav bit -> PRN chip -> spread chip -> sample -> replay source -> 幅度缩放 -> USRP
@@ -284,7 +284,7 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
         if config.enable_qt_preview and not HAVE_QTGUI:
             raise RuntimeError("Qt preview requested, but GNU Radio Qt GUI support is unavailable.")
 
-        super().__init__("gnss_tx_prn1_main")
+        super().__init__("gnss_tx_single_sat_main")
         self.config = config
         self.preview_window = None
         self.qt_time_sink = None

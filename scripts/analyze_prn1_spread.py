@@ -19,14 +19,14 @@ from gnss_tx.signal import GpsL1CaBpskGenerator
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate analysis artifacts for the PRN1 GPS L1 C/A spread-spectrum chain."
+        description="Generate analysis artifacts for a single-satellite GPS L1 C/A spread-spectrum chain."
     )
     parser.add_argument("--prn-id", type=int, default=1)
     parser.add_argument("--samples-per-chip", type=int, default=4)
     parser.add_argument("--amplitude", type=float, default=1.0)
     parser.add_argument("--num-ms", type=int, default=40)
     parser.add_argument("--nav-pattern", default="1 0 1 1 0 0 1 0")
-    parser.add_argument("--prefix", default="prn1_spread")
+    parser.add_argument("--prefix", default=None)
     return parser
 
 
@@ -48,7 +48,7 @@ def build_text_report(
 ) -> str:
     lines = [
         "=" * 60,
-        "PRN1 Spread Analysis",
+        f"PRN{prn_id} Spread Analysis",
         "=" * 60,
         f"prn_id={prn_id}",
         f"samples_per_chip={samples_per_chip}",
@@ -90,28 +90,28 @@ def save_preview_csv(path: Path, ca_code: np.ndarray, spread_chips: np.ndarray, 
     path.write_text("\n".join([header, *rows]), encoding="utf-8")
 
 
-def plot_ca_code(path: Path, ca_code: np.ndarray) -> None:
+def plot_ca_code(path: Path, ca_code: np.ndarray, prn_id: int) -> None:
     n_show = min(128, len(ca_code))
     x = np.arange(n_show)
     plt.figure(figsize=(10, 3.5))
     plt.step(x, ca_code[:n_show], where="post")
     plt.xlabel("Chip Index")
     plt.ylabel("Chip")
-    plt.title("PRN1 C/A Code Preview")
+    plt.title(f"PRN{prn_id} C/A Code Preview")
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(path, dpi=150)
     plt.close()
 
 
-def plot_spread_samples(path: Path, spread_samples: np.ndarray, samples_per_chip: int) -> None:
+def plot_spread_samples(path: Path, spread_samples: np.ndarray, samples_per_chip: int, prn_id: int) -> None:
     n_show = min(16 * samples_per_chip, len(spread_samples))
     x = np.arange(n_show)
     plt.figure(figsize=(10, 3.5))
     plt.step(x, np.real(spread_samples[:n_show]), where="post")
     plt.xlabel("Sample Index")
     plt.ylabel("Amplitude")
-    plt.title("PRN1 Spread Baseband Samples Preview")
+    plt.title(f"PRN{prn_id} Spread Baseband Samples Preview")
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(path, dpi=150)
@@ -171,7 +171,7 @@ def main() -> None:
         dtype=np.float32,
     )
 
-    prefix = args.prefix
+    prefix = args.prefix or f"prn{args.prn_id}_spread"
     code_npy = npy_dir / f"{prefix}_ca_code.npy"
     chips_npy = npy_dir / f"{prefix}_spread_chips.npy"
     samples_npy = npy_dir / f"{prefix}_spread_samples.npy"
@@ -185,8 +185,8 @@ def main() -> None:
     np.save(chips_npy, spread_chips)
     np.save(samples_npy, spread_samples)
     save_preview_csv(preview_csv, ca_code, spread_chips, spread_samples)
-    plot_ca_code(code_fig, ca_code)
-    plot_spread_samples(samples_fig, spread_samples, args.samples_per_chip)
+    plot_ca_code(code_fig, ca_code, args.prn_id)
+    plot_spread_samples(samples_fig, spread_samples, args.samples_per_chip, args.prn_id)
     plot_correlation(corr_fig, correlation)
 
     report = build_text_report(

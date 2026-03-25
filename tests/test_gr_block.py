@@ -143,6 +143,21 @@ class TestGpsL1CaSourceBlock(unittest.TestCase):
         self.assertEqual(len(replay), expected_len)
         self.assertEqual(replay.dtype, np.complex64)
 
+    def test_non_prn1_replay_samples_match_reference_generator(self) -> None:
+        replay = build_replay_samples(
+            prn_id=7,
+            samples_per_chip=2,
+            amplitude=0.5,
+            nav_pattern=[1, -1],
+        )
+        reference = GpsL1CaBpskGenerator(
+            prn_id=7,
+            samples_per_chip=2,
+            amplitude=0.5,
+            nav_pattern=[1, -1],
+        ).generate_samples(len(replay))
+        np.testing.assert_array_equal(replay, reference)
+
     def test_vector_source_repeats_replay_buffer(self) -> None:
         """验证 GNU Radio vector source 会循环回放 replay buffer。
 

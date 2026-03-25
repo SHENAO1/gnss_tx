@@ -7,21 +7,21 @@
 结合 `README.md`、`src/`、`configs/`、`scripts/`、`docs/`、`experiments/` 与现有测试，本工程当前的实际目标可以概括为：
 
 1. 生成 `GPS L1 C/A` 体制下的基带发送样本。
-2. 以 `PRN1` 为当前唯一实现对象，支持最基础的扩频发送。
+2. 以“单颗卫星、可选 `PRN1~32`”为当前实现对象，支持最基础的扩频发送。
 3. 通过 `GNU Radio + UHD + USRP B210` 完成实际射频发射。
 4. 通过 `QT 预览 + 频谱仪观察 + 实验清单/模板` 支撑实验室可见谱验证。
 5. 围绕“参数是否能在频谱仪上稳定观察到宽带包络”构建实验记录链路。
 
 从工程现状看，它当前并不是一个“完整 GNSS 发射机”，而是一个面向实验验证的 `GNSS/SDR` 发射原型系统，更准确地说，是一个：
 
-`以 GPS L1 C/A PRN1 为核心、采用预生成缓冲区循环回放方式、面向 USRP B210 和频谱仪观察的实验型发射链。`
+`以 GPS L1 C/A 单星可选 PRN 为核心、采用预生成缓冲区循环回放方式、面向 USRP B210 和频谱仪观察的实验型发射链。`
 
 ### 1.2 当前已实现的功能模块
 
 当前已经落地的模块能力如下：
 
 - `ca/`
-  - 生成 `PRN1` 的 GPS L1 C/A 码。
+  - 生成 `PRN1~32` 的 GPS L1 C/A 码。
   - 提供按 `samples_per_chip` 做重复采样的基础能力。
 
 - `nav/`
@@ -58,7 +58,6 @@
 虽然目录中已经出现若干与完整 GNSS 发射机相关的命名，但当前工程还不具备以下关键能力：
 
 - 真实导航电文与子帧构造。
-- 多 `PRN` 支持。
 - 多卫星并发合成。
 - 载波 NCO、Doppler、码相位与时间基准控制。
 - 星历/历书注入。
@@ -66,7 +65,7 @@
 
 因此，本工程当前的主目标仍应界定为：
 
-`PRN1 扩频基带发送与实验验证平台，而非完整 GNSS 卫星信号仿真器。`
+`单星可选 PRN 扩频基带发送与实验验证平台，而非完整 GNSS 卫星信号仿真器。`
 
 ## 2. 代码结构树
 
@@ -533,12 +532,12 @@ tone 模式主要用于：
 - 实现 `generate_nav.py`
 - 支持真实导航字、校验与子帧组织
 
-### 建议 2：扩展到多 PRN
+### 建议 2：从“可选单 PRN”扩展到多星合成
 
-目前 `generate_ca_code()` 只支持 `PRN1`，其接口虽然为未来扩展保留了 `prn_id`，但实现尚未展开。建议：
+当前 `generate_ca_code()` 已支持 `PRN1~32`，单星选择路径与测试已经补齐。后续若继续扩展，更高一层的目标应是：
 
-- 补齐 GPS C/A PRN 表。
-- 扩展多 PRN 生成与测试。
+- 在保持单星链路稳定的前提下设计多星合成接口。
+- 明确多星功率分配、码相位与导航 bit 组织方式。
 - 为后续多卫星合成铺路。
 
 ### 建议 3：引入时基、码相位与 Doppler 控制
@@ -566,7 +565,7 @@ tone 模式主要用于：
 
 下一步更高价值的验证目标应依次升级为：
 
-1. 接收端可检测到 PRN1 相关峰。
+1. 接收端可检测到目标 PRN 相关峰。
 2. 码相位可稳定捕获。
 3. 导航比特可解调。
 4. 最终可支撑接收机级验证。
@@ -687,16 +686,16 @@ tone 模式主要用于：
 
 而不是完整 `GPS NAV` 层。
 
-## 6.7 当前系统仅支持 PRN1
+## 6.7 当前系统支持单星可选 PRN，但仍不是多星平台
 
-当前所有关键链路都默认：
+当前所有关键链路已经支持：
 
-- `prn_id == 1`
+- `prn_id in [1, 32]`
 
-虽然接口保留了扩展空间，但大量代码、测试与配置都围绕 `PRN1` 写死，因此：
+但系统仍保持“每次只发送一颗卫星”的实验化架构，因此：
 
-- 它是一个单通道、单 PRN、实验化原型。
-- 还不能被视作通用 GNSS 发送平台。
+- 它是一个单星、可选 PRN、实验化原型。
+- 还不能被视作多星 GNSS 发送平台。
 
 ## 7. 关键接口说明
 
@@ -826,14 +825,14 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 | 符号 | 类型 | 说明 |
 |------|------|------|
 | `CA_CODE_LENGTH` | `int = 1023` | 每个 C/A 码周期的 chip 数，对应 1 ms 码周期 |
-| `generate_ca_code(prn_id)` | `ndarray[int8]` | 生成 PRN1 的 1023 chip C/A 码，输出 +1/-1 表示 |
+| `generate_ca_code(prn_id)` | `ndarray[int8]` | 生成目标 PRN 的 1023 chip C/A 码，输出 +1/-1 表示 |
 
 实现原理：
 - 采用两个 10 级 LFSR（G1、G2），初值全 1。
 - G1 反馈多项式：`x^3 ^ x^10`（对应抽头 3、10）。
 - G2 反馈多项式：`x^2 ^ x^3 ^ x^6 ^ x^8 ^ x^9 ^ x^10`。
-- PRN1 的 G2 输出抽头为第 2、6 位的异或。
-- 当前仅实现 PRN1，其他 PRN 会抛出 `NotImplementedError`。
+- 当前实现覆盖 GPS L1 C/A `PRN1~32`。
+- 不同 PRN 通过各自的 G2 输出抽头组合区分。
 
 #### `resampler.py`
 
@@ -875,7 +874,7 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 ```
 构造参数：
-  prn_id              int     PRN 编号（当前只支持 1）
+  prn_id              int     PRN 编号（当前支持 1~32）
   samples_per_chip    int     每 chip 对应的 sample 数
   amplitude           float   输出幅度（建议 ≤ 1.0）
   nav_pattern         list    导航 bit 循环模式
@@ -1024,7 +1023,7 @@ UHD stream 参数：`cpu_format=fc32`（主机侧 complex float），`otw_format
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `prn_id` | int | `1` | PRN 编号（当前仅支持 1） |
+| `prn_id` | int | `1` | PRN 编号（当前支持 1~32） |
 | `signal_mode` | str | `”spread”` | `”spread”`（扩频）或 `”tone”`（单音校准） |
 | `usrp_addr` | str | `”type=b200”` | UHD 设备地址，可用 `”serial=XXXXXXX”` 固定到序列号 |
 | `center_freq` | float | `100e6` | 射频中心频率 Hz |
@@ -1116,27 +1115,27 @@ CLI 参数完整列表：
 ### 12.3 扩频链离线分析 `analyze_prn1_spread.py`
 
 ```bash
-# 默认参数（40 ms，samples_per_chip=4）
+# 默认参数（40 ms，samples_per_chip=4，PRN1）
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py
 
 # 自定义参数
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py \
-    --prn-id 1 \
+    --prn-id 7 \
     --samples-per-chip 4 \
     --num-ms 40 \
     --nav-pattern “1 0 1 1 0 0 1 0” \
-    --prefix prn1_spread
+    --prefix prn7_spread
 ```
 
 输出到 `results/`：
-- `figs/prn1_spread_ca_code.png` — C/A 码波形图
-- `figs/prn1_spread_samples.png` — 扩频基带样本图
-- `figs/prn1_spread_correlation.png` — 1 ms 相关峰图
-- `npy/prn1_spread_ca_code.npy` — C/A 码 numpy 数组
-- `npy/prn1_spread_spread_chips.npy` — 扩频 chips
-- `npy/prn1_spread_spread_samples.npy` — 扩频复基带样本
-- `csv/prn1_spread_preview.csv` — 前 64 chip 对照表
-- `logs/prn1_spread_analysis.txt` — 文本分析报告
+- `figs/prn{n}_spread_ca_code.png` — C/A 码波形图
+- `figs/prn{n}_spread_samples.png` — 扩频基带样本图
+- `figs/prn{n}_spread_correlation.png` — 1 ms 相关峰图
+- `npy/prn{n}_spread_ca_code.npy` — C/A 码 numpy 数组
+- `npy/prn{n}_spread_spread_chips.npy` — 扩频 chips
+- `npy/prn{n}_spread_spread_samples.npy` — 扩频复基带样本
+- `csv/prn{n}_spread_preview.csv` — 前 64 chip 对照表
+- `logs/prn{n}_spread_analysis.txt` — 文本分析报告
 
 ### 12.4 单音测试 IQ 生成 `generate_test_iq.py`
 

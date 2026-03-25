@@ -2,7 +2,7 @@
 
 基于 Ubuntu + Python + GNU Radio + USRP B210 的 GPS L1 C/A 扩频发射实验平台。
 
-当前实现：以 **PRN1** 为核心，通过预生成复基带缓冲区循环回放的方式，驱动 USRP B210 发射 GPS L1 C/A 扩频信号，并通过频谱仪观察宽带包络验证链路正确性。支持单音校准模式、QT 软件侧频谱预览、参数扫描实验规划和双 USRP 空收验证场景。
+当前实现：支持 **单颗卫星、可选 PRN1~32** 的 GPS L1 C/A 扩频发射。系统通过预生成复基带缓冲区循环回放的方式，驱动 USRP B210 发射单星扩频信号，并通过频谱仪观察宽带包络验证链路正确性。支持单音校准模式、QT 软件侧频谱预览、参数扫描实验规划和双 USRP 空收验证场景。
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 功能 | 说明 |
 |------|------|
-| GPS L1 C/A 码生成 | 软件实现双 LFSR，生成标准 PRN1 C/A 码（1023 chip/ms） |
+| GPS L1 C/A 码生成 | 软件实现双 LFSR，生成标准 GPS L1 C/A PRN1~32 码（1023 chip/ms） |
 | 扩频基带生成 | 导航 bit × C/A 码 = 扩频 chip，展开为 complex64 BPSK 基带 sample |
 | 单音校准模式 | 生成复指数单音用于硬件链路（同轴 + 频谱仪）校准 |
 | GNU Radio 发射链 | `vector_source_c` 缓冲回放 + `multiply_const_cc` + `uhd.usrp_sink` |
@@ -27,7 +27,7 @@
 ```
 gnss_tx/
 ├── src/gnss_tx/          # 核心 Python 包
-│   ├── ca/               # C/A 码生成（PRN1 LFSR 实现）
+│   ├── ca/               # C/A 码生成（PRN1~32 LFSR 实现）
 │   ├── nav/              # 导航 bit 归一化与循环访问（50 bps）
 │   ├── signal/           # BPSK 扩频状态机 + 单音 IQ 生成 + 调制
 │   ├── gr/               # GNU Radio top block + QT 预览 + replay source
@@ -113,6 +113,9 @@ uhd_find_devices
 ```bash
 cd ~/projects/gnss_tx
 PYTHONPATH=src python3 scripts/run_tx.py --dry-run
+
+# 临时切换到其他单星 PRN
+PYTHONPATH=src python3 scripts/run_tx.py --dry-run --prn-id 7
 ```
 
 ### 2. 保守基线发射（tx_gain=0，最低功率）
@@ -221,23 +224,24 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 
 ```bash
 cd ~/projects/gnss_tx
-# 默认参数（40 ms，4 倍过采样）
+# 默认参数（40 ms，4 倍过采样，PRN1）
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py
 
-# 自定义
+# 自定义 PRN 与输出前缀
 PYTHONPATH=src python3 scripts/analyze_prn1_spread.py \
+    --prn-id 7 \
     --num-ms 80 \
     --samples-per-chip 4 \
     --amplitude 1.0 \
-    --prefix prn1_spread
+    --prefix prn7_spread
 ```
 
 输出到 `results/`：
-- `figs/prn1_spread_ca_code.png` — PRN1 C/A 码波形（前 128 chip）
-- `figs/prn1_spread_samples.png` — 扩频基带样本（前 16 chip 展开）
-- `figs/prn1_spread_correlation.png` — 1 ms 自相关峰
-- `npy/prn1_spread_*.npy` — numpy 数组
-- `logs/prn1_spread_analysis.txt` — 文本报告（含相关峰统计）
+- `figs/prn{n}_spread_ca_code.png` — 目标 PRN 的 C/A 码波形（前 128 chip）
+- `figs/prn{n}_spread_samples.png` — 扩频基带样本（前 16 chip 展开）
+- `figs/prn{n}_spread_correlation.png` — 1 ms 自相关峰
+- `npy/prn{n}_spread_*.npy` — numpy 数组
+- `logs/prn{n}_spread_analysis.txt` — 文本报告（含相关峰统计）
 
 ### 生成测试单音 IQ
 
@@ -381,7 +385,7 @@ PYTHONPATH=src python3 -m unittest tests/test_ca_prn.py -v
 
 ## 当前版本限制
 
-- 仅支持 **PRN1**（其他 PRN 的 G2 抽头表待补充）
+- 支持 **PRN1~32 的单星发送**，暂不支持多星叠加
 - 导航层为循环 bit pattern，**非真实 GPS NAV 子帧**
 - 无多卫星合成、无 Doppler 控制、无时基管理
 - 部分模块为占位空文件：`subframe_builder.py`、`timebase.py`、`logging.py`

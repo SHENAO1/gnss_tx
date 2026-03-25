@@ -1,5 +1,5 @@
 # Visible-spectrum runtime profile:
-# - Intended for reproducible observation of the PRN1 spread-spectrum envelope
+# - Intended for reproducible observation of a selected single-PRN spread-spectrum envelope
 # - The historical 2026-03-22 checkpoint remains archived under experiments/
 # - Keep the same cable path and analyzer settings when comparing results
 prn_id: 1

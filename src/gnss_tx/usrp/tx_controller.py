@@ -18,6 +18,7 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
+from gnss_tx.ca.prn_generator import SUPPORTED_PRN_IDS
 from gnss_tx.gr.top_block import GpsL1CaTxTopBlock, TxBlockConfig
 from gnss_tx.usrp.b210_sink import create_b210_sink
 from gnss_tx.utils.io import load_yaml_file
@@ -61,7 +62,7 @@ class TxRuntimeConfig:
     """
     
     # ========== 导航和模式参数 ==========
-    # PRN ID（卫星伪随机码号，1-32）。当前版本只支持 PRN1
+    # PRN ID（卫星伪随机码号，当前支持 GPS L1 C/A PRN1~32）
     prn_id: int = 1
     
     # 信号类型：
@@ -167,7 +168,7 @@ class TxRuntimeConfig:
         
         检查列表：
         1. 信号模式是否合法（只支持 "spread" 和 "tone"）
-        2. 当前版本只支持 PRN1，其他 PRN 尚未实现
+        2. PRN ID 是否在当前支持范围内（GPS L1 C/A PRN1~32）
         3. 采样和时序参数是否合理（> 0）
         4. 频率和增益是否在物理合理范围
         5. 幅度是否在正常的信号范围内
@@ -180,12 +181,15 @@ class TxRuntimeConfig:
             
         抛出：
             ValueError - 参数无效
-            NotImplementedError - 功能尚未实现（如 PRN != 1）
+            ValueError - 参数无效（如 PRN 超出支持范围）
         """
         if self.signal_mode not in {"spread", "tone"}:
             raise ValueError("signal_mode must be one of: spread, tone.")
-        if self.prn_id != 1:
-            raise NotImplementedError("v1 only supports PRN1.")
+        if self.prn_id not in SUPPORTED_PRN_IDS:
+            raise ValueError(
+                f"prn_id must be in the supported GPS L1 C/A range "
+                f"{SUPPORTED_PRN_IDS[0]}..{SUPPORTED_PRN_IDS[-1]}."
+            )
         if self.samples_per_chip <= 0:
             raise ValueError("samples_per_chip must be > 0.")
         if self.center_freq <= 0:
@@ -519,13 +523,13 @@ def _signal_generation_label(config: TxRuntimeConfig) -> str:
     
     返回：
     - "单音缓冲回放" for tone 模式
-    - "PRN1 C/A 扩频缓冲回放" for spread 模式
+    - "PRN{n} C/A 扩频缓冲回放" for spread 模式
     
     这是一个私有函数，用于中文实验表格
     """
     if config.signal_mode == "tone":
         return "单音缓冲回放"
-    return "PRN1 C/A 扩频缓冲回放"
+    return f"PRN{config.prn_id} C/A 扩频缓冲回放"
 
 
 def format_lab_table_summary(config: TxRuntimeConfig, device_report: str = "") -> str:

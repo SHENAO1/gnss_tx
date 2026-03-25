@@ -1,13 +1,13 @@
-# PRN1 扩频发送平台下一阶段工程体检与整理建议
+# 单星可选 PRN 扩频发送平台下一阶段工程体检与整理建议
 
 ## 结论摘要
 
-当前仓库已经形成一个可运行的 `PRN1 GPS L1 C/A` 扩频发送实验平台，主链清晰、实验链条基本成形，但配置真源、实验记录和 GNU Radio Companion 镜像入口之间仍然存在语义漂移。经过本次整理，当前最重要的工程判断是：
+当前仓库已经形成一个可运行的“单星可选 `PRN1~32` 的 GPS L1 C/A”扩频发送实验平台，主链清晰、实验链条基本成形，但配置真源、实验记录和 GNU Radio Companion 镜像入口之间仍然存在语义漂移。经过本次整理，当前最重要的工程判断是：
 
 - Python runtime 仍是权威主线。
 - GNU Radio Companion 保留为 Ubuntu 虚拟机里的“可点击运行镜像入口”。
 - `tx_b210.yaml`、`tx_b210_visible_spectrum.yaml`、历史 checkpoint 和 `gnss_tx_main.grc` 需要明确区分语义，不能再互相冒充。
-- 下一阶段最优先的工作仍然是把 PRN1 实验平台做稳定、清晰、可验证，而不是扩展完整 GNSS 发射能力。
+- 下一阶段最优先的工作仍然是把“单星可选 PRN”实验平台做稳定、清晰、可验证，而不是扩展完整 GNSS 发射能力。
 
 ## 本次基线核查
 
@@ -67,7 +67,7 @@
 - `usrp_addr = "type=b200"`
 - `nav_pattern = "1 0 1 1 0 0 1 0"`
 
-这组值的目的不是替代 Python runtime 的安全基线文件，而是保证 Ubuntu 里直接点开 `.grc` 就能持续发射当前已实现的 PRN1 扩频 BPSK 复基带，并同时看到 QT 时域和频域预览。
+这组值的目的不是替代 Python runtime 的安全基线文件，而是保证 Ubuntu 里直接点开 `.grc` 就能持续发射当前已实现的单星扩频 BPSK 复基带，并同时看到 QT 时域和频域预览。
 
 ## configs / tests / docs 的语义漂移
 
@@ -183,15 +183,15 @@ Companion 侧当前默认值定为：
 
 ## 下一阶段最优先的 5 个工程任务
 
-1. 持续维护 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)，保证 Ubuntu 虚拟机中点击运行即可持续发射 PRN1 扩频 BPSK 复基带。
+1. 持续维护 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)，保证 Ubuntu 虚拟机中点击运行即可持续发射单星扩频 BPSK 复基带。
 2. 明确并长期保持三套语义的边界：
    - `tx_b210.yaml` 是安全基线。
    - `tx_b210_visible_spectrum.yaml` 是当前 runtime 可见谱配置。
    - 历史 checkpoint 记录的是当时实验事实。
 3. 补齐最小可用的单音校准工件，至少让 `lab_single_tone.yaml` 与实验流程不再断层。
 4. 继续补强验证闭环，重点覆盖 replay 边界连续性、配置装载一致性、dry-run 与实验验收步骤。
-5. 在 PRN1 实验平台完全站稳后，再评估是否进入真实导航电文、多 PRN、多星和多普勒能力。
+5. 在单星可选 PRN 实验平台完全站稳后，再评估是否进入真实导航电文、多星和多普勒能力。
 
 ## 阶段判断
 
-当前工程最适合继续收敛为“PRN1 扩频发送实验平台”。在这个阶段，清晰的主线、稳定的 Ubuntu 运行入口、可追溯的实验记录和一致的配置语义，比继续扩充完整 GNSS 功能更重要。
+当前工程最适合继续收敛为“单星可选 PRN 扩频发送实验平台”。在这个阶段，清晰的主线、稳定的 Ubuntu 运行入口、可追溯的实验记录和一致的配置语义，比继续扩充完整 GNSS 功能更重要。

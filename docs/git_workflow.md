@@ -7,15 +7,21 @@
 - `main`
   - 只保存可复现、已验证的稳定版本。
   - 不直接承载实验性开发。
-- `feat/prn1-tx-spectrum`
+- `feat/single-sat-selectable-prn`
   - 当前 GNSS TX 主开发分支。
-  - PRN1 发射链、GRC、USRP 相关日常开发统一落在这里。
+  - 单星可选 `PRN1~32` 的发射链、GRC、USRP 相关日常开发统一落在这里。
+- `feat/prn1-tx-spectrum`
+  - 历史固定 PRN1 开发分支。
+  - 作为本轮可选 PRN 改造前的演进背景保留，不再作为当前主线。
+- `backup/2026-03-25-prn1-fixed-single-sat`
+  - 固定 PRN1 发送版本的留档分支。
+  - 用于回看“改造前可捕获的 PRN1 基线”。
 - `backup/YYYY-MM-DD-*`
   - 只用于保存阶段快照、实验前备份或高风险改动前的存档。
   - 推送到远端后默认冻结，不继续作为日常开发主线。
 - 短命开发分支
-  - 从 `feat/prn1-tx-spectrum` 切出，例如 `feat/grc-launcher-refine`、`fix/usrp-runtime-check`。
-  - 完成后尽快回合到 `feat/prn1-tx-spectrum`。
+  - 从 `feat/single-sat-selectable-prn` 切出，例如 `feat/grc-launcher-refine`、`fix/usrp-runtime-check`。
+  - 完成后尽快回合到 `feat/single-sat-selectable-prn`。
 
 ## 2. 提交约定
 
@@ -53,7 +59,7 @@ python3 scripts/run_tx.py --dry-run --config configs/tx_b210.yaml
 
 ## 5. 推荐日常流程
 
-1. 日常开发从 `feat/prn1-tx-spectrum` 或其短命子分支开始。
+1. 日常开发从 `feat/single-sat-selectable-prn` 或其短命子分支开始。
 2. 修改 `.grc` 或 block 模板后，立即同步更新生成 Python 文件。
 3. 运行最低验证命令。
 4. 使用正式前缀提交。

@@ -1,6 +1,6 @@
 # experiments 目录说明
 
-本目录用于记录 `PRN1 GPS L1 C/A` 扩频发送实验，不作为泛化的临时文档堆放区。
+本目录用于记录 `GPS L1 C/A` 单星扩频发送实验，不作为泛化的临时文档堆放区。当前代码支持 `PRN1~32`，但历史记录会保留当时的 `PRN1` 基线实验事实。
 
 ## 文件类型说明
 
@@ -86,7 +86,7 @@ source .venv/bin/activate
   - 作用：当前 runtime 配置里的持续扩频观察组合。
 - 历史检查点
   - 文件：[2026-03-22_prn1_visible_spectrum_checkpoint.md](/home/shen/projects/gnss_tx/experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md)
-  - 作用：保留当天“频谱仪上可见宽带包络”的实验事实。
+  - 作用：保留当天“PRN1 在频谱仪上可见宽带包络”的实验事实。
 
 不要把这三者混成同一层语义：
 
@@ -115,6 +115,7 @@ source .venv/bin/activate
 ## 每次实验结束后建议回写的内容
 
 - 使用了哪个配置文件和哪些关键参数。
+- 使用的 `prn_id` 是多少。
 - 发射期间是否稳定看到宽带包络。
 - 停止发射后是否消失。
 - 是否保存截图，截图文件名是什么。

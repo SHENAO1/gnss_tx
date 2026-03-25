@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: GNSS TX PRN1 B210
+# Title: GNSS TX Single-Sat B210
 # GNU Radio version: 3.10.9.2
 
 from PyQt5 import Qt
@@ -45,9 +45,9 @@ from gnss_tx.usrp import format_uhd_tx_sample_rate_report
 class gnss_tx_main(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "GNSS TX PRN1 B210", catch_exceptions=True)
+        gr.top_block.__init__(self, "GNSS TX Single-Sat B210", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("GNSS TX PRN1 B210")
+        self.setWindowTitle("GNSS TX Single-Sat B210")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -81,6 +81,7 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         self.usrp_addr = usrp_addr = "type=b200"
         self.tx_gain = tx_gain = 0.0
         self.samp_rate = samp_rate = 1.023e6 * samples_per_chip
+        self.prn_id = prn_id = 1
         self.nav_pattern = nav_pattern = "1 0 1 1 0 0 1 0"
         self.center_freq = center_freq = 100e6
         self.amplitude = amplitude = 1.0
@@ -106,7 +107,7 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         self.qt_time = qtgui.time_sink_c(
             512, #size
             samp_rate, #samp_rate
-            "PRN1 Baseband Time", #name
+            "Selected PRN Baseband Time", #name
             1, #number of inputs
             None # parent
         )
@@ -163,7 +164,7 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
             window.WIN_BLACKMAN_hARRIS, #wintype
             center_freq, #fc
             samp_rate, #bw
-            "PRN1 Baseband Spectrum", #name
+            "Selected PRN Baseband Spectrum", #name
             1,
             None # parent
         )
@@ -180,7 +181,7 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
 
 
 
-        labels = ["PRN1 RF Preview", '', '', '', '',
+        labels = ["Selected PRN RF Preview", '', '', '', '',
             '', '', '', '', '']
         widths = [1, 1, 1, 1, 1,
             1, 1, 1, 1, 1]
@@ -205,7 +206,7 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         for c in range(1, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
         self.prn_source = make_gps_l1_ca_vector_source(
-            prn_id=1,
+            prn_id=prn_id,
             samples_per_chip=samples_per_chip,
             amplitude=1.0,
             nav_pattern=nav_pattern,
@@ -268,6 +269,12 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
 
     def set_nav_pattern(self, nav_pattern):
         self.nav_pattern = nav_pattern
+
+    def get_prn_id(self):
+        return self.prn_id
+
+    def set_prn_id(self, prn_id):
+        self.prn_id = prn_id
 
     def get_center_freq(self):
         return self.center_freq

@@ -59,6 +59,27 @@ class TestRunTxScript(unittest.TestCase):
         self.assertIn("信号观测频率=100000000.0", output)
         self.assertIn("基带偏移频率=0.0", output)
 
+    def test_dry_run_accepts_prn_override_and_reports_selected_prn(self) -> None:
+        argv = [
+            "run_tx.py",
+            "--config",
+            "configs/tx_b210_visible_spectrum.yaml",
+            "--prn-id",
+            "7",
+            "--dry-run",
+        ]
+
+        with mock.patch("sys.argv", argv):
+            with mock.patch.object(run_tx, "uhd_find_devices_output", return_value="serial: 193982"):
+                buffer = io.StringIO()
+                with redirect_stdout(buffer):
+                    exit_code = run_tx.main()
+
+        output = buffer.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("prn_id=7", output)
+        self.assertIn("生成方式=PRN7 C/A 扩频缓冲回放", output)
+
 
 if __name__ == "__main__":
     unittest.main()

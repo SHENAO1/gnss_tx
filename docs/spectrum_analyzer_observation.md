@@ -1,6 +1,6 @@
 # 频谱仪观察说明
 
-当前工程可以通过 B210 发射一段缓冲回放的 PRN1 GPS L1 C/A 扩频基带信号，并在频谱仪上观察其宽带包络。
+当前工程可以通过 B210 发射一段缓冲回放的单星 GPS L1 C/A 扩频基带信号，并在频谱仪上观察其宽带包络。当前代码支持 `PRN1~32`，每次选择一颗星发送。
 
 ## 字段语义说明
 
@@ -20,6 +20,11 @@
   - spread 模式下等于 `center_freq`。
   - tone 模式下等于 `center_freq + tone_offset_hz`。
 
+- `prn_id`
+  - 表示当前单星发送使用的 GPS L1 C/A PRN 编号。
+  - 当前支持范围为 `1~32`。
+  - 可由 YAML 配置或 `scripts/run_tx.py --prn-id` 指定。
+
 ## 推荐配置
 
 - 安全基线配置：[`configs/tx_b210.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210.yaml)
@@ -34,7 +39,7 @@
 - `configs/tx_b210_visible_spectrum.yaml`
   - 当前 runtime / Ubuntu bring-up 的可见谱配置。
 - [`experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md`](/home/shen/projects/gnss_tx/experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md)
-  - 历史实验检查点，记录的是当日的实验事实。
+  - 历史实验检查点，记录的是当日 `PRN1` 实验事实，不代表当前功能边界仍限于 PRN1。
 
 ## 推荐排障顺序
 
@@ -94,6 +99,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 ```bash
 PYTHONPATH=src python3 scripts/run_tx.py \
   --config configs/tx_b210_visible_spectrum.yaml \
+  --prn-id 7 \
   --qt-preview
 ```
 
@@ -133,6 +139,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 这段摘要专门对应实验表格里的关键字段，例如：
 
 - `发送信号类型`
+- `prn_id`
 - `采样率`
 - `射频中心频率`
 - `发射增益`

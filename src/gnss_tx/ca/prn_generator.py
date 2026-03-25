@@ -7,15 +7,44 @@ CA_CODE_LENGTH = 1023
 
 _PRN_G2_TAPS: dict[int, tuple[int, int]] = {
     1: (2, 6),
+    2: (3, 7),
+    3: (4, 8),
+    4: (5, 9),
+    5: (1, 9),
+    6: (2, 10),
+    7: (1, 8),
+    8: (2, 9),
+    9: (3, 10),
+    10: (2, 3),
+    11: (3, 4),
+    12: (5, 6),
+    13: (6, 7),
+    14: (7, 8),
+    15: (8, 9),
+    16: (9, 10),
+    17: (1, 4),
+    18: (2, 5),
+    19: (3, 6),
+    20: (4, 7),
+    21: (5, 8),
+    22: (6, 9),
+    23: (1, 3),
+    24: (4, 6),
+    25: (5, 7),
+    26: (6, 8),
+    27: (7, 9),
+    28: (8, 10),
+    29: (1, 6),
+    30: (2, 7),
+    31: (3, 8),
+    32: (4, 9),
 }
+SUPPORTED_PRN_IDS = tuple(sorted(_PRN_G2_TAPS))
 
 
 def generate_ca_code(prn_id: int) -> np.ndarray:
     """
     Generate one GPS L1 C/A epoch as int8 chips in +/-1 representation.
-
-    Only PRN1 is implemented in v1, but the interface keeps ``prn_id``
-    configurable for future expansion.
 
     物理意义：
     - 输出的是一个卫星 PRN 的 1 ms 扩频码序列。
@@ -23,7 +52,9 @@ def generate_ca_code(prn_id: int) -> np.ndarray:
       再被重复采样为 baseband sample。
     """
     if prn_id not in _PRN_G2_TAPS:
-        raise NotImplementedError(f"Only PRN1 is implemented in v1, got PRN {prn_id}.")
+        raise ValueError(
+            f"prn_id must be one of {SUPPORTED_PRN_IDS[0]}..{SUPPORTED_PRN_IDS[-1]}, got {prn_id}."
+        )
 
     # GPS L1 C/A 码由两个 10 级 LFSR 组合而成。
     # G1、G2 初值全 1；不同 PRN 通过选择 G2 的抽头组合来区分。
@@ -53,4 +84,4 @@ def generate_ca_code(prn_id: int) -> np.ndarray:
     return code
 
 
-__all__ = ["CA_CODE_LENGTH", "generate_ca_code"]
+__all__ = ["CA_CODE_LENGTH", "SUPPORTED_PRN_IDS", "generate_ca_code"]

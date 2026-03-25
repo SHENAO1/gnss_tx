@@ -26,8 +26,11 @@ from gnss_tx.usrp import (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the PRN1 GNU Radio + B210 transmit chain.")
+    parser = argparse.ArgumentParser(
+        description="Run the single-satellite GPS L1 C/A GNU Radio + B210 transmit chain."
+    )
     parser.add_argument("--config", default="configs/tx_b210.yaml")
+    parser.add_argument("--prn-id", type=int)
     parser.add_argument("--center-freq", type=float)
     parser.add_argument("--tx-gain", type=float)
     parser.add_argument("--sample-rate", type=float)
@@ -55,6 +58,7 @@ def main() -> int:
     config = load_tx_runtime_config(Path(args.config))
     config = apply_overrides(
         config,
+        prn_id=args.prn_id,
         center_freq=args.center_freq,
         tx_gain=args.tx_gain,
         sample_rate=args.sample_rate,

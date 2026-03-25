@@ -17,7 +17,7 @@ from gnss_tx.signal.spreader import GpsL1CaBpskGenerator
 
 
 class TestGpsL1CaBpskGenerator(unittest.TestCase):
-    """验证 PRN1 扩频状态机与样本输出行为的测试集合。"""
+    """验证单星 PRN 扩频状态机与样本输出行为的测试集合。"""
 
     def test_first_nav_bit_covers_20_code_epochs(self) -> None:
         """验证首个导航比特持续 20 个 C/A 码周期。
@@ -84,6 +84,18 @@ class TestGpsL1CaBpskGenerator(unittest.TestCase):
 
         # 验证跨多次调用后仍能保持样本连续性。
         np.testing.assert_array_equal(actual, expected)
+
+    def test_non_prn1_generation_matches_reference_code(self) -> None:
+        code = generate_ca_code(7)
+        generator = GpsL1CaBpskGenerator(
+            prn_id=7,
+            samples_per_chip=1,
+            amplitude=1.0,
+            nav_pattern=[1],
+        )
+
+        epoch = generator.generate_samples(CA_CODE_LENGTH).real.astype(np.int8)
+        np.testing.assert_array_equal(epoch, code)
 
     def test_sample_repetition_respects_chip_boundaries(self) -> None:
         """验证 chip 到 sample 的展开不会跨越码片边界。

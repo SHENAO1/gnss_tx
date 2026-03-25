@@ -158,6 +158,13 @@ class TestTxController(unittest.TestCase):
         self.assertIn("信号观测频率=100000000.0", summary)
         self.assertIn("基带偏移频率=0.0", summary)
 
+    def test_non_prn1_spread_mode_is_accepted_and_reported(self) -> None:
+        config = TxRuntimeConfig(prn_id=7, tx_gain=10.0, amplitude=0.5).validate()
+        summary = format_lab_table_summary(config)
+
+        self.assertIn("生成方式=PRN7 C/A 扩频缓冲回放", summary)
+        self.assertIn("信号观测频率=100000000.0", summary)
+
     def test_lab_table_summary_reports_tone_offset_frequency(self) -> None:
         """验证单音模式摘要会正确报告观测频率与基带频偏。
 
@@ -252,6 +259,12 @@ class TestTxController(unittest.TestCase):
         # 扩频模式要求 sample_rate 与 PRN chip 速率严格匹配。
         with self.assertRaises(ValueError):
             TxRuntimeConfig(signal_mode="spread", sample_rate=2_000_000.0).validate()
+
+    def test_prn_range_validation_rejects_out_of_range_values(self) -> None:
+        with self.assertRaises(ValueError):
+            TxRuntimeConfig(prn_id=0).validate()
+        with self.assertRaises(ValueError):
+            TxRuntimeConfig(prn_id=33).validate()
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@
 - [ ] `center_freq = 100000000.0`
 - [ ] `sample_rate = 4092000.0`
 - [ ] `samples_per_chip = 4`
+- [ ] `prn_id = 1`
 - [ ] `antenna = TX/RX`
 - [ ] 使用同一台频谱仪、同一根线缆、同一组基础显示参数
 

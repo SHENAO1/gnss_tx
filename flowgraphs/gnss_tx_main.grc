@@ -3,7 +3,7 @@ options:
     author: ''
     category: Custom
     cmake_opt: ''
-    comment: 'PRN1 spread-spectrum continuous transmit mirror flowgraph for B210, QT preview, and lab bring-up.'
+    comment: 'Single-satellite GPS L1 C/A spread-spectrum continuous transmit mirror flowgraph for B210, QT preview, and lab bring-up.'
     copyright: ''
     description: ''
     gen_cmake: 'Off'
@@ -21,7 +21,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: GNSS TX PRN1 B210
+    title: GNSS TX Single-Sat B210
     window_size: 1800,1200
   states:
     coordinate: [8, 11]
@@ -92,11 +92,20 @@ blocks:
     coordinate: [632, 24]
     rotation: 0
     state: enabled
+- name: prn_id
+  id: variable
+  parameters:
+    comment: ''
+    value: '1'
+  states:
+    coordinate: [632, 72]
+    rotation: 0
+    state: enabled
 - name: safety_note
   id: note
   parameters:
     comment: ''
-    note: "PRN1 only. This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: PRN1 GPS L1 C/A spread-spectrum BPSK complex baseband, not a tone and not a full GNSS navigation transmitter.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
+    note: "This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nIt supports one selected GPS L1 C/A PRN at a time via the prn_id variable (currently PRN1~32).\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: single-satellite GPS L1 C/A spread-spectrum BPSK complex baseband, not a tone and not a full GNSS navigation transmitter.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
   states:
     coordinate: [840, 20]
     rotation: 0
@@ -109,7 +118,7 @@ blocks:
     initial_nav_bit_index: '0'
     initial_nav_epoch: '0'
     nav_pattern: nav_pattern
-    prn_id: '1'
+    prn_id: prn_id
     samples_per_chip: samples_per_chip
   states:
     coordinate: [192, 272]
@@ -139,7 +148,7 @@ blocks:
     label1: I
     label2: Q
     legend: 'True'
-    name: '"PRN1 Baseband Time"'
+    name: '"Selected PRN Baseband Time"'
     nconnections: '1'
     size: '512'
     srate: samp_rate
@@ -174,9 +183,9 @@ blocks:
     grid: 'True'
     gui_hint: 0,1,1,1
     label: Relative Gain
-    label1: '"PRN1 RF Preview"'
+    label1: '"Selected PRN RF Preview"'
     legend: 'True'
-    name: '"PRN1 Baseband Spectrum"'
+    name: '"Selected PRN Baseband Spectrum"'
     nconnections: '1'
     norm_window: 'False'
     showports: 'False'
