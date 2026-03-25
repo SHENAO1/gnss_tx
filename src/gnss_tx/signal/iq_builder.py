@@ -23,6 +23,10 @@ def generate_complex_tone(
     ----
     complex64 ndarray
     """
+    # n 是“第几个采样点”的索引，不是秒。
     n = np.arange(int(sample_rate * duration_s), dtype=np.float64)
+    # 这里必须除以 sample_rate（fs），把采样点索引换算为时间 t=n/fs。
+    # 复指数/正弦的相位应为 2*pi*f*t，所以离散形式是 2*pi*f*n/fs。
+    # 也可理解为：每个采样点固定前进 2*pi*f/fs 弧度的相位。
     x = amplitude * np.exp(1j * 2 * np.pi * tone_freq * n / sample_rate)
     return x.astype(np.complex64)

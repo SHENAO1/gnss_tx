@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 from typing import Sequence
 
 import numpy as np
@@ -42,6 +43,8 @@ class GpsL1CaBpskGenerator:
     4. 两者相乘得到 spread chip。
     5. 将每个 chip 展开为多个 baseband sample。
     """
+    # 通俗理解：这个类像“带记忆的信号笔”。
+    # 每次调用 generate_* 都会从上次停下的位置继续输出，不会悄悄从头开始。
 
     def __init__(
         self,
@@ -53,6 +56,10 @@ class GpsL1CaBpskGenerator:
         initial_nav_epoch: int = 0,
         initial_nav_bit_index: int = 0,
     ) -> None:
+        # 必须是严格正整数，避免 0.5 这类值被 int() 截断为 0，
+        # 进而导致 sample 生成循环无法前进。
+        if isinstance(samples_per_chip, bool) or not isinstance(samples_per_chip, Integral):
+            raise ValueError("samples_per_chip must be a positive integer.")
         if samples_per_chip <= 0:
             raise ValueError("samples_per_chip must be a positive integer.")
 
@@ -69,6 +76,9 @@ class GpsL1CaBpskGenerator:
         if initial_nav_bit_index < 0:
             raise ValueError("initial_nav_bit_index must be >= 0.")
 
+        # 这里把“时间刻度”初始化到起点：
+        # code_phase 控制码片位置，nav_epoch_in_bit 控制 20ms 内第几个 1ms，
+        # nav_bit_index 控制当前导航 bit，sample_phase_in_chip 控制 chip 内采样偏移。
         self.state = GeneratorState(
             code_phase=int(initial_code_phase),
             nav_epoch_in_bit=int(initial_nav_epoch),
@@ -77,15 +87,20 @@ class GpsL1CaBpskGenerator:
         )
 
     def _current_nav_bit(self) -> int:
+        # 当前 20ms 时间窗内要使用的导航符号（通常为 +1 或 -1）。
         return self.nav_source.bit_at(self.state.nav_bit_index)
 
     def _current_spread_chip(self) -> np.int8:
         # 物理意义：导航 bit 负责 20 ms 级别的符号翻转，
         # PRN 码负责 1.023 Mcps 级别的扩频。
+        # 结果是每个 chip 对应一个符号位（+1/-1）。
         return np.int8(self._current_nav_bit() * self.ca_code[self.state.code_phase])
 
     def _advance_chip(self) -> None:
         # 推进到下一个 PRN chip。
+        # 可把它想成一个“里程表”：
+        # 先走 code_phase；code_phase 回卷时推进 nav_epoch_in_bit；
+        # nav_epoch_in_bit 再回卷时推进 nav_bit_index。
         self.state.code_phase += 1
         if self.state.code_phase < CA_CODE_LENGTH:
             return
@@ -108,6 +123,7 @@ class GpsL1CaBpskGenerator:
             raise RuntimeError("Generator is not chip-aligned; finish the current chip first.")
 
         # 该接口输出的是 chip 级序列，常用于离线分析或相关性验证。
+        # 这里每次循环只做两件事：取当前 chip，然后把状态推进 1 个 chip。
         chips = np.empty(num_chips, dtype=np.int8)
         for index in range(num_chips):
             chips[index] = self._current_spread_chip()
@@ -131,17 +147,19 @@ class GpsL1CaBpskGenerator:
             spread_chip = self._current_spread_chip()
             # 一个 chip 会被展开成 ``samples_per_chip`` 个 sample。
             # 如果当前调用只消费了部分 chip，就先把当前 chip 的剩余 sample 补齐。
-            run = min(
-                self.samples_per_chip - self.state.sample_phase_in_chip,
-                num_samples - write_index,
-            )
+            # 也就是说 run 表示“本轮最多能连续写多少个相同符号的 sample”。
+            samples_left_in_chip = self.samples_per_chip - self.state.sample_phase_in_chip
+            samples_left_in_request = num_samples - write_index
+            run = min(samples_left_in_chip, samples_left_in_request)
 
+            # 对当前 chip 对应的连续 sample 区间做一次性切片写入。
             out[write_index : write_index + run] = pos_level if spread_chip > 0 else neg_level
             write_index += run
             self.state.sample_phase_in_chip += run
 
             if self.state.sample_phase_in_chip == self.samples_per_chip:
                 # 当前 chip 的所有 sample 已输出完，才允许进入下一个 chip。
+                # 这样可保证 chip 边界和 sample 边界严格一致，不会跳相位。
                 self.state.sample_phase_in_chip = 0
                 self._advance_chip()
 
