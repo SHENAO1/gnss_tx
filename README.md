@@ -62,6 +62,23 @@ gnss_tx/
 
 ---
 
+## 架构图索引
+
+项目各模块的架构图均以 [draw.io](https://app.diagrams.net/) 格式保存，可用 draw.io 桌面版或 VS Code draw.io 插件直接打开：
+
+| 文件 | 说明 |
+|------|------|
+| [docs/system_architecture.drawio](docs/system_architecture.drawio) | 系统整体架构：基带生成 → GNU Radio → USRP 端到端流程 |
+| [docs/gnss_tx_signal_chain.drawio](docs/gnss_tx_signal_chain.drawio) | GPS L1 C/A 信号链详细数据流 |
+| [src/gnss_tx/ca/architecture.drawio](src/gnss_tx/ca/architecture.drawio) | C/A 码生成模块（双 LFSR 实现） |
+| [src/gnss_tx/nav/architecture.drawio](src/gnss_tx/nav/architecture.drawio) | 导航 bit 归一化与循环访问模块 |
+| [src/gnss_tx/signal/architecture.drawio](src/gnss_tx/signal/architecture.drawio) | BPSK 扩频状态机 + 单音生成 + 多星叠加合成 |
+| [src/gnss_tx/gr/architecture.drawio](src/gnss_tx/gr/architecture.drawio) | GNU Radio top block 与回放流图结构 |
+| [src/gnss_tx/usrp/architecture.drawio](src/gnss_tx/usrp/architecture.drawio) | B210 sink 创建与运行时配置 |
+| [src/gnss_tx/utils/architecture.drawio](src/gnss_tx/utils/architecture.drawio) | 工具模块（YAML 加载、timebase、logging） |
+
+---
+
 ## 环境安装
 
 ### 系统依赖（GNU Radio + UHD）

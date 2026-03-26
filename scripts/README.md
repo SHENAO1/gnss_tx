@@ -15,6 +15,7 @@
 | `export_iq.py` | 导出扩频基带 IQ 数据为文件 |
 | `generate_nav.py` | 生成导航 bit 序列辅助文件 |
 | `quick_check.py` | 检查项目目录结构与 Python 环境是否正常 |
+| `plot_results_win.py` | 在 Windows 上绘制 `results/npy/test_iq_tone.npy` 时域波形 |
 | `run_gnss_tx_grc.sh` | 启动 GNU Radio Companion（详见 grc/README.md） |
 
 > 所有 Python 脚本须设置 `PYTHONPATH=src`，或在激活虚拟环境后运行。
