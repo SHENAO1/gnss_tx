@@ -38,7 +38,7 @@ outputs:
   dtype: complex
 
 asserts:
-- ${ prn_id == 1 }
+- ${ 1 <= prn_id <= 32 }
 - ${ samples_per_chip > 0 }
 
 templates:
@@ -65,12 +65,13 @@ templates:
     )
 
 documentation: |-
-    GPS L1 C/A PRN1 buffered replay source.
+    GPS L1 C/A buffered replay source. Supports PRN 1~32 (selectable via prn_id).
 
-    v1 notes:
-    - Output is complex64 baseband with zero-valued Q branch
-    - Internal navigation data is a cyclic 50 bps test pattern
-    - One full nav-pattern period is precomputed and replayed in a loop
-    - Only PRN1 is implemented in the current codebase
+    Notes:
+    - Output is complex64 baseband BPSK spread-spectrum signal
+    - Internal navigation data is a cyclic 50 bps test pattern (not real GPS NAV)
+    - One full nav-pattern period is precomputed and replayed in a loop via vector_source_c
+    - For multi-PRN combined transmission (all 32 PRNs superimposed), use run_tx.py
+      with configs/tx_b210_all32prn.yaml instead of this GRC block
 
 file_format: 1

@@ -105,7 +105,7 @@ blocks:
   id: note
   parameters:
     comment: ''
-    note: "This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nIt supports one selected GPS L1 C/A PRN at a time via the prn_id variable (currently PRN1~32).\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: single-satellite GPS L1 C/A spread-spectrum BPSK complex baseband, not a tone and not a full GNSS navigation transmitter.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
+    note: "This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nIt supports single-satellite mode: select any GPS L1 C/A PRN (1~32) via the prn_id variable.\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: single-satellite GPS L1 C/A spread-spectrum BPSK complex baseband.\nFor multi-PRN combined transmission (all 32 PRNs superimposed), use run_tx.py with configs/tx_b210_all32prn.yaml.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
   states:
     coordinate: [840, 20]
     rotation: 0
