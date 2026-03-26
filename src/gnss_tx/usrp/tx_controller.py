@@ -64,7 +64,14 @@ class TxRuntimeConfig:
     # ========== 导航和模式参数 ==========
     # PRN ID（卫星伪随机码号，当前支持 GPS L1 C/A PRN1~32）
     prn_id: int = 1
-    
+
+    # 多星模式标志：True 时忽略 prn_id，发射多颗星叠加信号
+    all_prns: bool = False
+
+    # 可选 PRN 子集：仅在 all_prns=True 时生效
+    # None → 全部 32 颗；[1, 5, 10, 15] → 仅发射指定子集
+    prn_ids: list | None = None
+
     # 信号类型：
     #   "spread" - 扩频模式，真实的 GPS C/A 码信号（复杂，接近实际GPS信号）
     #   "tone"   - 单音模式，简单的单频正弦波（用于测试硬件和信号链）
@@ -185,11 +192,21 @@ class TxRuntimeConfig:
         """
         if self.signal_mode not in {"spread", "tone"}:
             raise ValueError("signal_mode must be one of: spread, tone.")
-        if self.prn_id not in SUPPORTED_PRN_IDS:
-            raise ValueError(
-                f"prn_id must be in the supported GPS L1 C/A range "
-                f"{SUPPORTED_PRN_IDS[0]}..{SUPPORTED_PRN_IDS[-1]}."
-            )
+        if not self.all_prns and self.prn_ids is None:
+            if self.prn_id not in SUPPORTED_PRN_IDS:
+                raise ValueError(
+                    f"prn_id must be in the supported GPS L1 C/A range "
+                    f"{SUPPORTED_PRN_IDS[0]}..{SUPPORTED_PRN_IDS[-1]}."
+                )
+        if self.prn_ids is not None:
+            if len(self.prn_ids) == 0:
+                raise ValueError("prn_ids must not be empty when provided.")
+            for pid in self.prn_ids:
+                if pid not in SUPPORTED_PRN_IDS:
+                    raise ValueError(
+                        f"prn_ids contains unsupported PRN {pid}; "
+                        f"must be in {SUPPORTED_PRN_IDS[0]}..{SUPPORTED_PRN_IDS[-1]}."
+                    )
         if self.samples_per_chip <= 0:
             raise ValueError("samples_per_chip must be > 0.")
         if self.center_freq <= 0:
@@ -227,6 +244,8 @@ class TxRuntimeConfig:
         """
         return TxBlockConfig(
             prn_id=self.prn_id,
+            all_prns=self.all_prns,
+            prn_ids=self.prn_ids,
             signal_mode=self.signal_mode,
             samples_per_chip=self.samples_per_chip,
             amplitude=self.amplitude,

@@ -1,0 +1,30 @@
+# PRN 子集叠加发射配置：同时发射指定几颗卫星的合并信号
+# 用途：在接收端验证是否恰好捕获了发射的那几颗星
+#
+# 使用方法（二选一）：
+#   1. 直接用本配置文件：
+#      python scripts/run_tx.py --config configs/tx_b210_prn_subset.yaml
+#
+#   2. 通过 CLI 参数临时指定子集（覆盖配置文件的 prn_ids）：
+#      python scripts/run_tx.py --config configs/tx_b210_prn_subset.yaml --prn-ids 3,9,22
+#
+# 修改 prn_ids 列表以选择不同的卫星子集（支持 PRN 1~32 中的任意组合）
+all_prns: true
+prn_ids: [1, 5, 10, 15]
+signal_mode: "spread"
+usrp_addr: "type=b200"
+center_freq: 100000000.0
+samples_per_chip: 4
+sample_rate: 4092000.0
+tx_gain: 0.0
+amplitude: 0.25
+antenna: "TX/RX"
+bandwidth: 4092000.0
+nav_pattern: "1 0 1 1 0 0 1 0"
+tone_offset_hz: 500000.0
+tone_buffer_s: 0.1
+duration_s: null
+continuous: true
+initial_code_phase: 0
+initial_nav_epoch: 0
+initial_nav_bit_index: 0

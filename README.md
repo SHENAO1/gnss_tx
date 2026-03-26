@@ -6,6 +6,8 @@
 - **单星模式**：可选 PRN1~32 任意一颗卫星的 GPS L1 C/A 扩频发射
 - **多星模式**：同时叠加发射全部 32 颗（或指定子集）PRN 的合并信号，√N 功率归一化
 
+配套接收端项目：[GNSS_RX](../GNSS_RX/README.md)（IQ 采集 + MATLAB 离线捕获分析）
+
 ---
 
 ## 功能概述
@@ -56,7 +58,7 @@ gnss_tx/
 | `configs/` | [configs/README.md](configs/README.md) | 配置文件说明、关键字段、PAPR 注意事项 |
 | `grc/` | [grc/README.md](grc/README.md) | GRC 流图与自定义块说明、GRC 启动命令 |
 | `experiments/` | [experiments/README.md](experiments/README.md) | 实验记录格式与复现入口 |
-| `docs/` | [docs/gnss_tx_architecture_analysis.md](docs/gnss_tx_architecture_analysis.md) | 完整架构分析、模块实现参考 |
+| `docs/` | [docs/gnss_tx_architecture_analysis.md](docs/gnss_tx_architecture_analysis.md) | 完整架构分析、模块实现参考；各子模块含 `architecture.drawio` 架构图 |
 
 ---
 
@@ -109,6 +111,10 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 # 32颗PRN叠加多星发射
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_all32prn.yaml --duration 60
+
+# 指定子集多星发射（用于接收端验证）
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --prn-ids 1,5,10,15 --duration 60
 
 # 通过 GNU Radio Companion 发射（单星模式）
 bash scripts/run_gnss_tx_grc.sh

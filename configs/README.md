@@ -13,6 +13,7 @@ CLI 参数可覆盖配置文件中的任意字段。
 | `tx_b210_visible_spectrum.yaml` | 单星 PRN1 | 已验证可在频谱仪观察到宽带包络的配置 |
 | `tx_b210_sn8003272.yaml` | 单星 PRN1 | 固定设备序列号，双 USRP OTA 空收用 |
 | `tx_b210_all32prn.yaml` | 32星叠加 | 同时叠加发射 GPS L1 C/A PRN 1~32 |
+| `tx_b210_prn_subset.yaml` | 子集叠加 | 发射指定几颗卫星（默认 PRN 1,5,10,15），用于接收端验证 |
 
 ---
 
@@ -21,7 +22,8 @@ CLI 参数可覆盖配置文件中的任意字段。
 | 字段 | 说明 | 示例值 |
 |------|------|--------|
 | `prn_id` | 单星模式目标 PRN（1~32）；`all_prns: true` 时忽略 | `1` |
-| `all_prns` | `true` = 多星叠加模式，忽略 `prn_id`，发射 PRN 1~32 全部叠加 | `false` |
+| `all_prns` | `true` = 多星叠加模式，忽略 `prn_id` | `false` |
+| `prn_ids` | 多星子集列表（仅 `all_prns: true` 时生效）；`null` 或不填则使用全部 32 颗 | `[1, 5, 10, 15]` |
 | `signal_mode` | `spread`（扩频）或 `tone`（单音校准） | `"spread"` |
 | `usrp_addr` | UHD 设备地址，`type=b200` 自动发现，或 `serial=8003272` 固定设备 | `"type=b200"` |
 | `center_freq` | 射频中心频率（Hz） | `100000000.0` |
@@ -34,7 +36,9 @@ CLI 参数可覆盖配置文件中的任意字段。
 
 ---
 
-## 多星模式（all_prns）注意事项
+## 多星模式注意事项
+
+### 32星全叠加
 
 `tx_b210_all32prn.yaml` 中 `all_prns: true`，信号生成过程如下：
 
@@ -50,6 +54,24 @@ PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_all32prn.yaml \
     --amplitude 0.15
 ```
+
+### PRN 子集叠加（用于接收端验证）
+
+`tx_b210_prn_subset.yaml` 中 `all_prns: true` 且 `prn_ids: [1, 5, 10, 15]`，
+仅叠加指定的几颗卫星，接收端可验证是否恰好捕获到了这些 PRN 的信号。
+
+**两种使用方式**（效果等价，二选一）：
+
+```bash
+# 方式一：直接通过 CLI 指定（无需修改文件）
+PYTHONPATH=src python3 scripts/run_tx.py --prn-ids 1,5,10,15
+
+# 方式二：修改配置文件中的 prn_ids 列表后使用
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_prn_subset.yaml
+```
+
+PRN 子集中每颗星的功率归一化方式与全叠加相同（除以 √N，N 为子集大小），`amplitude=0.25` 对于 4 颗星时峰值约为 2 × 0.25 = 0.5，DAC 安全裕量充足。
 
 ---
 
@@ -67,9 +89,14 @@ PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_visible_spectrum.yaml \
     --duration 30
 
-# 多星叠加发射
+# 多星叠加发射（全部32颗）
 PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_all32prn.yaml \
+    --duration 60
+
+# 指定子集发射（用于接收端验证）
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --prn-ids 1,5,10,15 \
     --duration 60
 ```
 

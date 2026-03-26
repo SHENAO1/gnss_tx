@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
+  <diagram id="utils-module" name="utils/ — 工具模块">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                  pageScale="1" pageWidth="900" pageHeight="580" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="utils/ 模块 — 工具函数（1 已实现，2 占位符）"
+                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="800" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 1: io.py (implemented) ===== -->
+        <mxCell id="io-bg" value="io.py  ✅ 已实现"
+                style="swimlane;startSize=28;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="20" y="55" width="260" height="450" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="io-in" value="输入: path: str | Path"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="100" width="230" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="io-impl" value="yaml.safe_load(f)&#xa;验证顶层类型为 dict&#xa;空文件返回 {}"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="175" width="230" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="io-func" value="load_yaml_file(path)&#xa;io.py"
+                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="275" width="230" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="io-out" value="输出: dict[str, Any]&#xa;YAML 顶层字典"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="360" width="230" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="io-users" value="被调用方: usrp/tx_controller.py&#xa;GNSS_RX/src/gnss_rx/runtime.py"
+                style="text;html=1;fontSize=9;fontColor=#666666;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="415" width="230" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 2: logging.py (placeholder) ===== -->
+        <mxCell id="log-bg" value="logging.py  ❌ 未实现占位符"
+                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=3;fontSize=12;dashed=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="320" y="55" width="260" height="450" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="log-plan" value="计划实现:&#xa;封装 Python logging 标准库&#xa;支持彩色控制台输出 + 文件 handler"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="335" y="100" width="230" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="log-func" value="get_logger(name: str)&#xa;→ logging.Logger&#xa;logging.py [未实现]"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="335" y="210" width="230" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="log-out" value="输出: logging.Logger 实例&#xa;控制台彩色输出 + 文件持久化"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#888888;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="335" y="310" width="230" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="log-users" value="计划被: run_tx.py, record_rx.py&#xa;所有模块统一使用"
+                style="text;html=1;fontSize=9;fontColor=#999999;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="335" y="375" width="230" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 3: timebase.py (placeholder) ===== -->
+        <mxCell id="tb-bg" value="timebase.py  ❌ 未实现占位符"
+                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=3;fontSize=12;dashed=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="620" y="55" width="260" height="450" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tb-f1" value="gps_week_from_datetime(dt: datetime)&#xa;→ int&#xa;GPS 周数（从 1980-01-06 起算）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="635" y="100" width="230" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tb-f2" value="gps_tow_from_datetime(dt: datetime)&#xa;→ float  [秒, 0~604800)&#xa;GPS 周内秒 (TOW)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="635" y="195" width="230" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tb-f3" value="set_usrp_timed_start(sink, delay_s: float)&#xa;→ None&#xa;UHD timed command: 精确对齐两台 USRP 启动时间"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="635" y="290" width="230" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="tb-users" value="计划被: nav/subframe_builder.py (TOW)&#xa;gr/top_block.py (双 USRP 同步)"
+                style="text;html=1;fontSize=9;fontColor=#999999;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="635" y="380" width="230" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-in" target="io-impl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-impl" target="io-func" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-func" target="io-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

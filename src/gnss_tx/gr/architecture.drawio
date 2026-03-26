@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
+  <diagram id="gr-module" name="gr/ — GNU Radio 流图模块">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                  pageScale="1" pageWidth="1200" pageHeight="860" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="gr/ 模块 — GNU Radio 流图 (top_block.py + source_block.py)"
+                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="1100" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== LEFT COLUMN: GpsL1CaTxTopBlock ===== -->
+        <mxCell id="in-cfg" value="输入: TxBlockConfig&#xa;+ sink_block (可注入 mock)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Sample building branch -->
+        <mxCell id="build-branch" value="信号模式分支"
+                style="rhombus;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="120" y="145" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="build-spread" value="build_replay_samples(prn_id, spc, amplitude, nav_pattern, ...)&#xa;signal/spreader.py&#xa;→ np.complex64[L]  预计算缓冲区"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="250" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="build-multi" value="build_multi_sat_replay_samples(prn_ids, spc, ...)&#xa;signal/multi_sat_combiner.py&#xa;→ np.complex64[L]  多星叠加"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="340" y="250" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="build-tone" value="build_tone_replay_samples(tone_offset_hz, ...)&#xa;signal/modulator.py&#xa;→ np.complex64[L]  纯音"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="640" y="250" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- GpsL1CaTxTopBlock -->
+        <mxCell id="top-block" value="GpsL1CaTxTopBlock(gr.top_block)&#xa;top_block.py"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="190" y="360" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Internal GNU Radio flowgraph -->
+        <mxCell id="gr-bg" value="内部 GNU Radio 流图"
+                style="swimlane;startSize=28;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="445" width="620" height="270" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="vec-src" value="blocks.vector_source_c(samples, repeat=True)&#xa;→ gr_complex 流（循环播放）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="488" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="qt-sink" value="[可选] qtgui.sink_c(fft_size=1024, ...)&#xa;频谱/瀑布图预览（实时显示）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;dashed=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="558" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mul-const" value="blocks.multiply_const_cc(amplitude)&#xa;→ gr_complex（幅度缩放）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="628" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="usrp-out" value="uhd.usrp_sink  (或注入的 sink_block)&#xa;USRP B210 硬件发射"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="690" width="280" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Methods -->
+        <mxCell id="methods-bg" value="GpsL1CaTxTopBlock 方法"
+                style="swimlane;startSize=24;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontStyle=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="700" y="445" width="280" height="270" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m1" value=".set_amplitude(amplitude: float)&#xa;运行时调整发射幅度"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="715" y="488" width="250" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m2" value=".show_preview()&#xa;启用 QT 频谱预览窗口"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="715" y="558" width="250" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m3" value=".close_preview()&#xa;关闭 QT 预览窗口"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="715" y="628" width="250" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== RIGHT COLUMN: GpsL1CaSourceBlock ===== -->
+        <mxCell id="src-block" value="GpsL1CaSourceBlock(gr.sync_block)&#xa;source_block.py  [实时源块]"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="1000" y="60" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="src-init" value="__init__(prn_id, spc, amplitude, nav_pattern, ...)&#xa;内部: GpsL1CaBpskGenerator(prn_id, spc, amplitude)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="155" width="200" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="src-work" value="work(input_items, output_items) → int&#xa;调用: generator.generate_samples(N)&#xa;输出端口 out: gr_complex"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="255" width="200" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="src-out" value="输出: gr_complex 流&#xa;（实时生成，无预计算缓冲区）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="360" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="src-note" value="注：GpsL1CaSourceBlock 用于测试&#xa;TxTopBlock 中使用预计算 vector_source_c"
+                style="text;html=1;fontSize=9;fontColor=#666666;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="430" width="200" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="in-cfg" target="build-branch" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-branch" target="build-spread" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-branch" target="build-multi" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-branch" target="build-tone" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-spread" target="top-block" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-multi" target="top-block" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="build-tone" target="top-block" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="top-block" target="vec-src" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="vec-src" target="qt-sink" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="qt-sink" target="mul-const" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mul-const" target="usrp-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="src-block" target="src-init" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="src-init" target="src-work" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="src-work" target="src-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

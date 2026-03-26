@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
+  <diagram id="signal-module" name="signal/ — 信号生成模块">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                  pageScale="1" pageWidth="1400" pageHeight="860" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="signal/ 模块 — 扩频信号生成（spreader / multi_sat_combiner / iq_builder / modulator）"
+                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="50" y="10" width="1300" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 1: spreader.py ===== -->
+        <mxCell id="sp-bg" value="spreader.py — 有状态 BPSK 扩频生成器"
+                style="swimlane;startSize=28;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="20" y="55" width="360" height="780" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-in" value="输入参数:&#xa;prn_id: int (1~32)&#xa;samples_per_chip: int&#xa;amplitude: float&#xa;nav_pattern: str | list&#xa;initial_code_phase: int&#xa;initial_nav_epoch: int&#xa;initial_nav_bit_index: int"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="95" width="330" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-state" value="GeneratorState  @dataclass&#xa;─────────────────&#xa;code_phase: int  [0, 1023)&#xa;nav_epoch_in_bit: int  [0, 20)&#xa;nav_bit_index: int&#xa;sample_phase_in_chip: int"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="230" width="330" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-cls" value="GpsL1CaBpskGenerator  (class)&#xa;────────────────────────────"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="360" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-chips" value=".generate_chips(num_chips) → np.int8&#xa;内部: ca_code[state.code_phase]&#xa;      × nav_bit_source.bit_at(idx)&#xa;更新 GeneratorState (码相位前进)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="430" width="330" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-samples" value=".generate_samples(num_samples) → np.complex64&#xa;内部: generate_chips() → repeat_chips()&#xa;      → chips × amplitude (real=chip, imag=0)&#xa;BPSK: Q 路始终为 0"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="535" width="330" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-out1" value="输出 generate_chips: np.int8[N]  {-1,+1}"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="645" width="330" height="35" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sp-out2" value="输出 generate_samples: np.complex64[M]&#xa;real = chip×amp,  imag = 0"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="35" y="695" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 2: multi_sat_combiner.py ===== -->
+        <mxCell id="mc-bg" value="multi_sat_combiner.py — 多星叠加"
+                style="swimlane;startSize=28;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="400" y="55" width="360" height="780" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-in" value="输入参数:&#xa;prn_ids: Sequence[int] | None  (None→全 32 颗)&#xa;samples_per_chip: int&#xa;nav_pattern: str | list[int]&#xa;normalize: bool  (默认 True)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="95" width="330" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-loop" value="for each prn_id in prn_ids:&#xa;  GpsL1CaBpskGenerator(&#xa;      prn_id=k, amplitude=1.0, ...)&#xa;  → np.complex64 per-PRN buffer"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="220" width="330" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-sum" value="线性叠加 (element-wise sum)&#xa;combined = sum(all_prn_buffers)&#xa;类型: np.complex64"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="340" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-norm" value="功率归一化 (if normalize=True):&#xa;combined ÷= √len(prn_ids)&#xa;保证叠加后每路功率相同&#xa;32 路: 峰值从 ~5.66× 降至 ~1×"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="435" width="330" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-func" value="build_multi_sat_replay_samples(&#xa;    prn_ids, spc, nav_pattern, normalize)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="550" width="330" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-out" value="输出: np.complex64[L]&#xa;L = nav_bits × 20 × 1023 × spc&#xa;功率归一化后的多星合并基带信号"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="630" width="330" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mc-note" value="⚠ 所有 PRN 共享同一 nav_pattern&#xa;每路 initial phase 均为 0"
+                style="text;html=1;fontSize=9;fontColor=#b85450;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="415" y="700" width="330" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== COLUMN 3: iq_builder.py + modulator.py ===== -->
+        <mxCell id="iq-bg" value="iq_builder.py + modulator.py — 辅助信号"
+                style="swimlane;startSize=28;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;"
+                vertex="1" parent="1">
+          <mxGeometry x="780" y="55" width="360" height="780" as="geometry"/>
+        </mxCell>
+
+        <!-- iq_builder section -->
+        <mxCell id="iq-sec" value="iq_builder.py — chips → complex baseband"
+                style="text;html=1;fontStyle=1;fontSize=11;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="90" width="330" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="iq-in" value="输入: chips: np.int8[N]  {-1,+1}&#xa;输入: amplitude: float"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="120" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="iq-impl" value="real = chips.astype(float32) × amplitude&#xa;imag = 0&#xa;→ np.complex64(real + 0j)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="190" width="330" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="iq-func" value="chips_to_complex_baseband(chips, amplitude)&#xa;iq_builder.py"
+                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="285" width="330" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="iq-out" value="输出: np.complex64[N]&#xa;BPSK 基带: real=±amp, imag=0"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="360" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- Divider -->
+        <mxCell id="divider" value="" style="line;strokeColor=#82b366;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="795" y="425" width="330" height="10" as="geometry"/>
+        </mxCell>
+
+        <!-- modulator section -->
+        <mxCell id="mod-sec" value="modulator.py — 单音校准信号生成"
+                style="text;html=1;fontStyle=1;fontSize=11;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="445" width="330" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mod-in" value="输入: sample_rate: float&#xa;输入: tone_freq: float (= center_freq + offset)&#xa;输入: duration_s: float&#xa;输入: amplitude: float"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="475" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mod-impl" value="n = np.arange(N)&#xa;x[n] = amplitude × exp(j×2π×f×n/fs)&#xa;N = int(duration_s × sample_rate)"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="570" width="330" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mod-func" value="generate_complex_tone(sr, freq, dur, amp)&#xa;modulator.py"
+                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="660" width="330" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mod-out" value="输出: np.complex64[N]&#xa;用途: RF 链路校准（无 GPS 信号）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="795" y="735" width="330" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+        <!-- spreader column -->
+        <mxCell id="es1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-in" target="sp-state" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="es2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-state" target="sp-cls" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="es3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-cls" target="sp-chips" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="es4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-cls" target="sp-samples" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="es5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-chips" target="sp-out1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="es6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="sp-samples" target="sp-out2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- multi_sat column -->
+        <mxCell id="em1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mc-in" target="mc-loop" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mc-loop" target="mc-sum" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mc-sum" target="mc-norm" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mc-norm" target="mc-func" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mc-func" target="mc-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- iq_builder column -->
+        <mxCell id="ei1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="iq-in" target="iq-impl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="iq-impl" target="iq-func" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ei3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="iq-func" target="iq-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mod-in" target="mod-impl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mod-impl" target="mod-func" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="em8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mod-func" target="mod-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- mc uses spreader internally -->
+        <mxCell id="cross1" value="内部调用 GpsL1CaBpskGenerator"
+                style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#aaaaaa;fontSize=9;"
+                edge="1" source="mc-loop" target="sp-cls" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

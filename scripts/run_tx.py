@@ -31,6 +31,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--config", default="configs/tx_b210.yaml")
     parser.add_argument("--prn-id", type=int)
+    parser.add_argument(
+        "--prn-ids",
+        type=str,
+        default=None,
+        help="Comma-separated PRN subset to transmit, e.g. --prn-ids 1,5,10,15. Implies multi-satellite mode.",
+    )
+    parser.add_argument(
+        "--all-prns",
+        action="store_true",
+        default=False,
+        help="Transmit all 32 PRNs combined (overrides --prn-id).",
+    )
     parser.add_argument("--center-freq", type=float)
     parser.add_argument("--tx-gain", type=float)
     parser.add_argument("--sample-rate", type=float)
@@ -56,9 +68,18 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     config = load_tx_runtime_config(Path(args.config))
+
+    prn_ids_parsed = None
+    all_prns = args.all_prns
+    if args.prn_ids is not None:
+        prn_ids_parsed = [int(x.strip()) for x in args.prn_ids.split(",")]
+        all_prns = True
+
     config = apply_overrides(
         config,
         prn_id=args.prn_id,
+        **({"all_prns": True} if all_prns else {}),
+        **({"prn_ids": prn_ids_parsed} if prn_ids_parsed is not None else {}),
         center_freq=args.center_freq,
         tx_gain=args.tx_gain,
         sample_rate=args.sample_rate,

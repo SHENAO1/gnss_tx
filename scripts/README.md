@@ -84,6 +84,41 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 > **PAPR 说明**：32颗PRN叠加后峰值幅度约为 √32 ≈ 5.66（功率归一化后），
 > `amplitude=0.25` 可将峰值压至约 1.4，避免 DAC 削波。
 
+### 多星模式（指定子集，用于接收端验证）
+
+发射指定的几颗卫星，然后在接收端确认是否捕获到了恰好这几颗星的信号。
+
+```bash
+cd ~/projects/gnss_tx
+
+# 方法一：通过 --prn-ids 直接指定（推荐，无需修改配置文件）
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --prn-ids 1,5,10,15 \
+    --dry-run                          # 先干运行确认配置
+
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --prn-ids 1,5,10,15 \
+    --duration 60
+
+# 方法二：使用配置文件（修改 prn_ids 列表后使用）
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_prn_subset.yaml \
+    --dry-run
+
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_prn_subset.yaml \
+    --duration 60
+
+# 临时通过 CLI 覆盖配置文件中的子集
+PYTHONPATH=src python3 scripts/run_tx.py \
+    --config configs/tx_b210_prn_subset.yaml \
+    --prn-ids 3,9,22 \
+    --duration 60
+
+# 发射全部 32 颗（等效于 --config tx_b210_all32prn.yaml）
+PYTHONPATH=src python3 scripts/run_tx.py --all-prns --duration 60
+```
+
 ### 单音校准模式
 
 ```bash
@@ -124,6 +159,8 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 |------|------|------|
 | `--config` | 路径 | YAML 配置文件（默认 `configs/tx_b210.yaml`） |
 | `--prn-id` | int | 目标 PRN（1~32，单星模式有效） |
+| `--prn-ids` | str | 逗号分隔的 PRN 子集，如 `1,5,10,15`，隐含多星模式（不需同时指定 `--all-prns`） |
+| `--all-prns` | flag | 发射全部 32 颗 PRN 叠加信号 |
 | `--center-freq` | float | 射频中心频率（Hz） |
 | `--tx-gain` | float | TX 增益（dB） |
 | `--sample-rate` | float | 基带采样率（Hz） |
@@ -136,7 +173,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 | `--qt-preview` | flag | 启用 GNU Radio QT 时/频域预览 |
 | `--dry-run` | flag | 仅打印配置，不启动发射 |
 
-> 多星模式通过配置文件中的 `all_prns: true` 字段触发，不需要额外 CLI 参数。
+> 多星模式可通过配置文件中的 `all_prns: true` 触发，也可直接使用 `--prn-ids` 或 `--all-prns` CLI 参数触发。
 > 详见 [configs/README.md](../configs/README.md)。
 
 ---

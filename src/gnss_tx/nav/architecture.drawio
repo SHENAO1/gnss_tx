@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
+  <diagram id="nav-module" name="nav/ — 导航 bit 模块">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1"
+                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
+                  pageScale="1" pageWidth="900" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/><mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="nav/ 模块 — GPS 导航 bit 管理"
+                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="100" y="10" width="700" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== LEFT COLUMN: normalize + CyclicNavBitSource (nav_bits.py) ===== -->
+        <mxCell id="in-pattern" value="输入: nav_pattern&#xa;Sequence | str | None"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="260" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fmt-support" value="支持输入格式:&#xa;• [1, 0, 1, ...] 或 [+1, -1, ...]&#xa;• &quot;1 0 1 1 0 0 1 0&quot; (空格分隔字符串)&#xa;• None → 使用 DEFAULT_NAV_PATTERN"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="260" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="func-norm" value="normalize_nav_bits(nav_pattern)&#xa;nav_bits.py&#xa;转换: 0→-1, 1→+1, 验证值域"
+                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="255" width="260" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="out-bits" value="输出: np.int8[M]&#xa;值域: {-1, +1}"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="345" width="260" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cls-cyclic" value="CyclicNavBitSource&#xa;nav_bits.py&#xa;@dataclass(frozen=True)&#xa;bits: np.int8[M]"
+                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="430" width="260" height="75" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="method-bit" value=".bit_at(index: int) → int {-1, +1}&#xa;实现: bits[index % len(bits)]&#xa;支持任意正整数 index（循环访问）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="540" width="260" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="out-bit" value="输出: int {-1, +1}&#xa;当前导航 bit 值（20ms 内保持不变）"
+                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="640" width="260" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== RIGHT COLUMN: subframe_builder.py (placeholder) ===== -->
+        <mxCell id="ph-bg" value="subframe_builder.py — [未实现占位符]"
+                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=3;fontSize=12;dashed=1;"
+                vertex="1" parent="1">
+          <mxGeometry x="370" y="60" width="480" height="400" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ph-tlm" value="build_subframe_tlm(tow_count, alert, as_is)&#xa;→ np.int8[300]&#xa;TLM word: 前同步码 10001011 + 遥测消息"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="385" y="105" width="330" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ph-how" value="build_subframe_how(tow, subframe_id)&#xa;→ np.int8[300]&#xa;HOW word: TOW × 6s + 子帧 ID + 奇偶校验"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="385" y="195" width="330" height="65" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ph-src" value="SubframeNavBitSource&#xa;@dataclass&#xa;计划: 替代 CyclicNavBitSource&#xa;按 IS-GPS-200 标准生成真实子帧序列"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="385" y="285" width="330" height="75" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ph-parity" value="24-bit Hamming 奇偶校验&#xa;IS-GPS-200 Table 20-XIV"
+                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="1">
+          <mxGeometry x="385" y="385" width="220" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== CONSTANTS ===== -->
+        <mxCell id="const-bg" value="模块常量 (nav_bits.py)"
+                style="swimlane;startSize=24;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=11;"
+                vertex="1" parent="1">
+          <mxGeometry x="370" y="500" width="480" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1" value="NAV_BIT_RATE_BPS = 50"
+                style="text;html=1;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="380" y="525" width="200" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2" value="CA_EPOCHS_PER_NAV_BIT = 20"
+                style="text;html=1;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="380" y="545" width="220" height="18" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="DEFAULT_NAV_PATTERN = (1,-1,1,1,-1,-1,1,-1)"
+                style="text;html=1;fontSize=10;align=left;" vertex="1" parent="1">
+          <mxGeometry x="600" y="525" width="240" height="18" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="in-pattern" target="fmt-support" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="fmt-support" target="func-norm" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="func-norm" target="out-bits" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="out-bits" target="cls-cyclic" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="cls-cyclic" target="method-bit" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="method-bit" target="out-bit" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Future replacement arrow -->
+        <mxCell id="e-future" value="未来替代"
+                style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#999999;fontColor=#999999;fontSize=9;"
+                edge="1" source="ph-src" target="cls-cyclic" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
