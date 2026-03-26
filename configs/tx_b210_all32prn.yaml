@@ -1,0 +1,22 @@
+# 32颗PRN叠加发射配置：同时发射 GPS L1 C/A PRN 1~32 的合并信号
+# - all_prns: true 时忽略 prn_id，自动叠加全部32颗卫星
+# - 信号叠加后做 sqrt(32) 功率归一化，每颗星的平均功率等效于单星
+# - amplitude 与单星配置相同（归一化已在信号生成阶段完成）
+all_prns: true
+signal_mode: "spread"
+usrp_addr: "type=b200"
+center_freq: 100000000.0
+samples_per_chip: 4
+sample_rate: 4092000.0
+tx_gain: 0.0
+amplitude: 0.25
+antenna: "TX/RX"
+bandwidth: 4092000.0
+nav_pattern: "1 0 1 1 0 0 1 0"
+tone_offset_hz: 500000.0
+tone_buffer_s: 0.1
+duration_s: null
+continuous: true
+initial_code_phase: 0
+initial_nav_epoch: 0
+initial_nav_bit_index: 0

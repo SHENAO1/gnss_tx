@@ -7,6 +7,7 @@ import numpy as np
 from gnss_tx.ca.prn_generator import CA_CODE_LENGTH
 from gnss_tx.nav.nav_bits import CA_EPOCHS_PER_NAV_BIT, normalize_nav_bits
 from gnss_tx.signal.iq_builder import generate_complex_tone
+from gnss_tx.signal.multi_sat_combiner import build_multi_sat_replay_samples
 from gnss_tx.signal.spreader import GpsL1CaBpskGenerator
 
 try:
@@ -34,8 +35,12 @@ _TopBlockBase = gr.top_block if HAVE_GNURADIO else object
 
 @dataclass(frozen=True)
 class TxBlockConfig:
-    # 当前支持 GPS L1 C/A PRN1~32 的单星发送。
+    # 当前支持 GPS L1 C/A PRN1~32 的单星发送，以及 32 颗星叠加发送。
     prn_id: int = 1
+    # True 时忽略 prn_id，发射 PRN 1~32 全部叠加的合并信号。
+    all_prns: bool = False
+    # 可选：指定要叠加的 PRN 子集；None 且 all_prns=True 时使用全部 32 颗。
+    prn_ids: list | None = None
     # ``spread`` 对应 PRN 扩频发送，``tone`` 对应单音校准发送。
     signal_mode: str = "spread"
     # 每个 chip 展开为多少个 sample。
@@ -297,8 +302,16 @@ class GpsL1CaTxTopBlock(_TopBlockBase):
                 tone_offset_hz=config.tone_offset_hz,
                 tone_buffer_s=config.tone_buffer_s,
             )
+        elif config.all_prns or config.prn_ids is not None:
+            # 多星叠加模式：生成多颗 PRN 的合并基带 sample 缓冲区。
+            # all_prns=True 且 prn_ids=None 时默认使用 PRN 1~32 全部 32 颗。
+            self.replay_samples = build_multi_sat_replay_samples(
+                prn_ids=config.prn_ids,
+                samples_per_chip=config.samples_per_chip,
+                nav_pattern=config.nav_pattern,
+            )
         else:
-            # 扩频链路：先在 Python 中生成完整的扩频 sample 缓冲区，
+            # 单星扩频链路：先在 Python 中生成完整的扩频 sample 缓冲区，
             # 再交给 GNU Radio 做稳定回放。
             self.replay_samples = build_replay_samples(
                 prn_id=config.prn_id,
@@ -345,6 +358,7 @@ __all__ = [
     "HAVE_QTGUI",
     "TxBlockConfig",
     "TxPreviewWindow",
+    "build_multi_sat_replay_samples",
     "build_replay_samples",
     "build_tone_replay_samples",
     "make_gps_l1_ca_vector_source",
