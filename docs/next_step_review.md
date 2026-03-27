@@ -91,7 +91,7 @@
 - `tx_gain = 10.0`
 - `amplitude = 1.0`
 
-而历史检查点 [experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md](/home/shen/projects/gnss_tx/experiments/2026-03-22_prn1_visible_spectrum_checkpoint.md) 记录的是：
+而历史检查点 [experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md) 记录的是：
 
 - `tx_gain = 10.0`
 - `amplitude = 0.5`

@@ -238,4 +238,4 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 1. 将上方记录表填完，截图/拍照保存频谱仪截图
 2. 与 Claude 共同分析，确认推荐参数
 3. 改接线路：`B210 TX → [线缆] → B210 RX`
-4. 跳转执行 `../2026-03-27_ber_loopback_tx_plan.md` Step 2（正式 BER 发射）
+4. 跳转执行 `../ber_loopback_tx/2026-03-27_ber_loopback_tx_plan.md` Step 2（正式 BER 发射）

@@ -106,12 +106,30 @@ gnss_tx/
 │       ├── plot_env_notes.md                        # Windows 绘图环境说明
 │       └── plotting_requirements.txt                # Windows 侧绘图依赖
 ├── experiments/
-│   ├── 2026-03-22_prn1_visible_spectrum_checkpoint.md  # PRN1 可见谱实验检查点记录
-│   ├── 2026-03-22_task_archive.md                   # 任务归档记录
-│   ├── 2026-03-22_tx_visibility_sweep_draft.md      # 参数扫描实验草稿
-│   ├── observation_log_template.md                  # 观察记录模板
-│   ├── tx_visibility_sweep_checklist.md             # 参数扫描勾选清单
-│   └── tx_visibility_sweep_template.csv             # 实验表模板
+│   ├── plans/
+│   │   ├── INDEX.md                                 # 发射端计划索引
+│   │   ├── 2026-03-26/
+│   │   │   └── tx_rx_improvement/
+│   │   │       └── 2026-03-26_tx_rx_improvement_plan.md
+│   │   └── 2026-03-27/
+│   │       ├── ber_loopback_tx/
+│   │       │   └── 2026-03-27_ber_loopback_tx_plan.md
+│   │       └── tx_power_test/
+│   │           └── tx_power_test.md
+│   ├── records/
+│   │   ├── 2026-03-22/
+│   │   │   └── tx_visibility_sweep/
+│   │   │       ├── 2026-03-22_prn1_visible_spectrum_checkpoint.md
+│   │   │       ├── 2026-03-22_task_archive.md
+│   │   │       ├── 2026-03-22_tx_visibility_sweep_draft.md
+│   │   │       ├── tx_visibility_sweep_checklist.md
+│   │   │       └── tx_visibility_sweep_template.csv
+│   │   └── 2026-03-24/
+│   │       └── dual_usrp_loopback/
+│   │           └── 2026-03-24_dual_usrp_loopback_procedure.md
+│   └── templates/
+│       └── general/
+│           └── observation_log_template.md
 ├── flowgraphs/
 │   ├── gnss_tx_main.grc                             # GRC 主流图，描述 PRN1 扩频发送与 QT 预览
 │   ├── single_tone_test.grc                         # 空文件，占位 GRC；按命名应为单音测试流图
@@ -121,8 +139,7 @@ gnss_tx/
 │       └── gnss_tx_gps_l1_ca_source.block.yml       # GNU Radio Companion 自定义块定义
 ├── results/
 │   ├── csv/
-│   │   ├── prn1_spread_preview.csv                  # 扩频预览数据表
-│   │   └── tx_visibility_sweep_template.csv         # 参数扫描模板输出
+│   │   └── prn1_spread_preview.csv                  # 扩频预览数据表
 │   ├── figs/
 │   │   ├── prn1_spread_ca_code.png                  # C/A 码图
 │   │   ├── prn1_spread_correlation.png              # 相关图

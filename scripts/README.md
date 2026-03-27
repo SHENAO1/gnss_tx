@@ -152,7 +152,7 @@ PYTHONPATH=src python3 scripts/run_tx.py \
     --duration 60
 ```
 
-详细操作步骤见 [experiments/2026-03-24_dual_usrp_loopback_procedure.md](../experiments/2026-03-24_dual_usrp_loopback_procedure.md)。
+详细操作步骤见 [experiments/records/2026-03-24/dual_usrp_loopback/2026-03-24_dual_usrp_loopback_procedure.md](../experiments/records/2026-03-24/dual_usrp_loopback/2026-03-24_dual_usrp_loopback_procedure.md)。
 
 ### CLI 参数完整参考
 

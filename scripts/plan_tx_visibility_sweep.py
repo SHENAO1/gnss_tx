@@ -55,18 +55,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--csv-output",
-        default="results/csv/tx_visibility_sweep_template.csv",
-        help="CSV 模板输出路径。",
+        default=None,
+        help="CSV 模板输出路径。默认按当天日期生成到 experiments/records/YYYY-MM-DD/tx_visibility_sweep/。",
     )
     parser.add_argument(
         "--checklist-output",
-        default="experiments/tx_visibility_sweep_checklist.md",
-        help="Markdown 勾选清单输出路径。",
+        default=None,
+        help="Markdown 勾选清单输出路径。默认按当天日期生成到 experiments/records/YYYY-MM-DD/tx_visibility_sweep/。",
     )
     parser.add_argument(
         "--draft-output",
         default=None,
-        help="实验记录草稿输出路径。默认按当天日期生成到 experiments/ 目录。",
+        help="实验记录草稿输出路径。默认按当天日期生成到 experiments/records/YYYY-MM-DD/tx_visibility_sweep/。",
     )
     return parser
 
@@ -548,12 +548,13 @@ def print_commands(config_path: Path) -> None:
 def main() -> None:
     args = build_parser().parse_args()
     config_path = Path(args.config)
-    csv_output = Path(args.csv_output)
-    checklist_output = Path(args.checklist_output)
+    default_records_dir = Path("experiments") / "records" / date.today().isoformat() / "tx_visibility_sweep"
+    csv_output = Path(args.csv_output) if args.csv_output else default_records_dir / "tx_visibility_sweep_template.csv"
+    checklist_output = Path(args.checklist_output) if args.checklist_output else default_records_dir / "tx_visibility_sweep_checklist.md"
     draft_output = (
         Path(args.draft_output)
         if args.draft_output
-        else Path("experiments") / f"{date.today().isoformat()}_tx_visibility_sweep_draft.md"
+        else default_records_dir / f"{date.today().isoformat()}_tx_visibility_sweep_draft.md"
     )
 
     write_template_csv(csv_output, config_path)
