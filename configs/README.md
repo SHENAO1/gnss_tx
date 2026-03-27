@@ -14,6 +14,7 @@ CLI 参数可覆盖配置文件中的任意字段。
 | `tx_b210_sn8003272.yaml` | 单星 PRN1 | 固定设备序列号，双 USRP OTA 空收用 |
 | `tx_b210_all32prn.yaml` | 32星叠加 | 同时叠加发射 GPS L1 C/A PRN 1~32 |
 | `tx_b210_prn_subset.yaml` | 子集叠加 | 发射指定几颗卫星（默认 PRN 1,5,10,15），用于接收端验证 |
+| `tx_b210_cable_loopback.yaml` | 单星 PRN1 | **射频线直连高功率**配置，`tx_gain=89`+30 dB 衰减器，配合 BER 回环测试用 |
 
 ---
 

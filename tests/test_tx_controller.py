@@ -158,6 +158,38 @@ class TestTxController(unittest.TestCase):
         self.assertIn("信号观测频率=100000000.0", summary)
         self.assertIn("基带偏移频率=0.0", summary)
 
+    def test_lab_table_summary_prefers_serial_from_config_over_first_discovered_device(self) -> None:
+        """验证多设备场景下实验摘要优先回显配置中指定的 serial。"""
+        config = TxRuntimeConfig(
+            usrp_addr="serial=8003272",
+            tx_gain=0.0,
+            amplitude=1.0,
+        ).validate()
+
+        summary = format_lab_table_summary(
+            config,
+            "\n".join(
+                [
+                    "--------------------------------------------------",
+                    "-- UHD Device 0",
+                    "--------------------------------------------------",
+                    "Device Address:",
+                    "    serial: 193982",
+                    "    product: B210",
+                    "",
+                    "--------------------------------------------------",
+                    "-- UHD Device 1",
+                    "--------------------------------------------------",
+                    "Device Address:",
+                    "    serial: 8003272",
+                    "    product: B210",
+                ]
+            ),
+        )
+
+        self.assertIn("serial=8003272", summary)
+        self.assertNotIn("serial=193982", summary)
+
     def test_non_prn1_spread_mode_is_accepted_and_reported(self) -> None:
         config = TxRuntimeConfig(prn_id=7, tx_gain=10.0, amplitude=0.5).validate()
         summary = format_lab_table_summary(config)

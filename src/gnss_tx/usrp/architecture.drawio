@@ -1,140 +1,104 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
-  <diagram id="usrp-module" name="usrp/ — USRP 配置与控制模块">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1"
-                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
-                  pageScale="1" pageWidth="1200" pageHeight="860" math="0" shadow="0">
-      <root>
-        <mxCell id="0"/><mxCell id="1" parent="0"/>
-
-        <!-- Title -->
-        <mxCell id="title" value="usrp/ 模块 — 运行时配置管理与 USRP B210 硬件接口 (tx_controller.py + b210_sink.py)"
-                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
-                vertex="1" parent="1">
-          <mxGeometry x="50" y="10" width="1100" height="30" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== MAIN CONFIG FLOW (center-left) ===== -->
-        <mxCell id="in-yaml" value="输入: YAML 文件路径 (str | Path)&#xa;configs/tx_b210*.yaml"
-                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="60" width="300" height="50" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="load-yaml" value="load_yaml_file(path)&#xa;→ dict[str, Any]  [来自 utils/io.py]"
-                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="145" width="300" height="50" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="load-config" value="load_tx_runtime_config(path) → TxRuntimeConfig&#xa;tx_controller.py&#xa;派生规则: sample_rate = 1.023e6 × spc (若未填)&#xa;         bandwidth = sample_rate (若未填)"
-                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="230" width="300" height="75" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="runtime-cfg" value="TxRuntimeConfig  @dataclass(frozen=True)&#xa;──────────────────────────────────&#xa;prn_id: int           signal_mode: str&#xa;usrp_addr: str        center_freq: float&#xa;sample_rate: float    samples_per_chip: int&#xa;tx_gain: float|None   amplitude: float&#xa;antenna: str          bandwidth: float|None&#xa;nav_pattern: str      tone_offset_hz: float&#xa;tone_buffer_s: float  duration_s: float|None&#xa;continuous: bool      enable_qt_preview: bool&#xa;initial_code_phase / nav_epoch / nav_bit_index"
-                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="345" width="300" height="185" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="validate" value=".validate() → TxRuntimeConfig&#xa;检查: signal_mode ∈ {spread, tone}&#xa;      prn_id ∈ SUPPORTED_PRN_IDS&#xa;      sample_rate == 1.023e6 × spc (spread)&#xa;      |tone_offset| &lt; sample_rate/2 (tone)&#xa;失败: 抛出 ValueError"
-                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="565" width="300" height="100" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="to-block" value=".to_block_config() → TxBlockConfig&#xa;转换为 GNU Radio 块所需格式"
-                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="700" width="300" height="55" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="block-cfg" value="TxBlockConfig  @dataclass&#xa;─────────────────────────&#xa;all_prns: bool    prn_ids: list|None&#xa;signal_mode, spc, amplitude, ...&#xa;(传入 GpsL1CaTxTopBlock)"
-                style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="40" y="790" width="300" height="90" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== APPLY OVERRIDES (branch from runtime-cfg) ===== -->
-        <mxCell id="in-cli" value="输入: CLI 覆盖参数 **kwargs&#xa;(--prn-id, --center-freq, ...)"
-                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="500" y="345" width="230" height="50" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="apply-overrides" value="apply_overrides(config, **kwargs)&#xa;→ TxRuntimeConfig&#xa;tx_controller.py&#xa;处理参数联动 (sample_rate ↔ spc)"
-                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="500" y="430" width="230" height="75" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== SINK CREATION ===== -->
-        <mxCell id="create-sink" value="create_b210_sink(config: TxBlockConfig)&#xa;b210_sink.py&#xa;→ uhd.usrp_sink"
-                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="500" y="700" width="230" height="60" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="usrp-sink" value="uhd.usrp_sink (USRP B210)&#xa;设置: sample_rate, center_freq&#xa;      tx_gain, antenna, bandwidth"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;"
-                vertex="1" parent="1">
-          <mxGeometry x="500" y="800" width="230" height="70" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== UTILITY FUNCTIONS (right column) ===== -->
-        <mxCell id="util-bg" value="辅助/报告函数 (tx_controller.py)"
-                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontStyle=1;fontSize=11;"
-                vertex="1" parent="1">
-          <mxGeometry x="800" y="55" width="360" height="500" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="u1" value="format_config_report(config) → str&#xa;人类可读的配置参数汇总"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="100" width="330" height="50" as="geometry"/>
-        </mxCell>
-        <mxCell id="u2" value="format_observation_checklist(config) → str&#xa;频谱仪 11 步观测安全操作清单"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="165" width="330" height="50" as="geometry"/>
-        </mxCell>
-        <mxCell id="u3" value="format_lab_table_summary(config, device_report) → str&#xa;实验台摘要（含设备报告）"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="230" width="330" height="50" as="geometry"/>
-        </mxCell>
-        <mxCell id="u4" value="uhd_find_devices_output() → str&#xa;子进程执行 uhd_find_devices，返回文本"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="295" width="330" height="50" as="geometry"/>
-        </mxCell>
-        <mxCell id="u5" value="is_b210_available() → bool&#xa;检测是否发现可用 B210 设备"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="360" width="330" height="50" as="geometry"/>
-        </mxCell>
-        <mxCell id="u6" value="read_uhd_sink_sample_rate(sink) → float|None&#xa;从硬件读回实际采样率并比对偏差"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="815" y="425" width="330" height="50" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== EDGES ===== -->
-        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="in-yaml" target="load-yaml" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="load-yaml" target="load-config" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="load-config" target="runtime-cfg" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="runtime-cfg" target="validate" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="validate" target="to-block" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="to-block" target="block-cfg" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="in-cli" target="apply-overrides" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="runtime-cfg" target="apply-overrides" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="apply-overrides" target="validate" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="block-cfg" target="create-sink" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="create-sink" target="usrp-sink" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="usrp-module" name="usrp/ — USRP 配置与控制模块">
+        <mxGraphModel dx="1351" dy="1209" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="860" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="usrp/ 模块 — 运行时配置管理与 USRP B210 硬件接口 (tx_controller.py + b210_sink.py)" style="text;html=1;fontStyle=1;fontSize=14;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="10" width="1100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="in-yaml" value="输入: YAML 文件路径 (str | Path)&#xa;configs/tx_b210*.yaml" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="60" width="300" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="load-yaml" value="load_yaml_file(path)&#xa;→ dict[str, Any]  [来自 utils/io.py]" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="145" width="300" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="load-config" value="load_tx_runtime_config(path) → TxRuntimeConfig&#xa;tx_controller.py&#xa;派生规则: sample_rate = 1.023e6 × spc (若未填)&#xa;         bandwidth = sample_rate (若未填)" style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="230" width="300" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="runtime-cfg" value="TxRuntimeConfig  @dataclass(frozen=True)&#xa;──────────────────────────────────&#xa;prn_id: int           signal_mode: str&#xa;usrp_addr: str        center_freq: float&#xa;sample_rate: float    samples_per_chip: int&#xa;tx_gain: float|None   amplitude: float&#xa;antenna: str          bandwidth: float|None&#xa;nav_pattern: str      tone_offset_hz: float&#xa;tone_buffer_s: float  duration_s: float|None&#xa;continuous: bool      enable_qt_preview: bool&#xa;initial_code_phase / nav_epoch / nav_bit_index" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="345" width="300" height="185" as="geometry"/>
+                </mxCell>
+                <mxCell id="validate" value=".validate() → TxRuntimeConfig&#xa;检查: signal_mode ∈ {spread, tone}&#xa;      prn_id ∈ SUPPORTED_PRN_IDS&#xa;      sample_rate == 1.023e6 × spc (spread)&#xa;      |tone_offset| &lt; sample_rate/2 (tone)&#xa;失败: 抛出 ValueError" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="570" width="300" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="to-block" value=".to_block_config() → TxBlockConfig&#xa;转换为 GNU Radio 块所需格式" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="700" width="300" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="block-cfg" value="TxBlockConfig  @dataclass&#xa;─────────────────────────&#xa;all_prns: bool    prn_ids: list|None&#xa;signal_mode, spc, amplitude, ...&#xa;(传入 GpsL1CaTxTopBlock)" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="790" width="300" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="in-cli" value="输入: CLI 覆盖参数 **kwargs&#xa;(--prn-id, --center-freq, ...)" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="315" width="230" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="apply-overrides" value="apply_overrides(config, **kwargs)&#xa;→ TxRuntimeConfig&#xa;tx_controller.py&#xa;处理参数联动 (sample_rate ↔ spc)" style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="400" width="230" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="create-sink" value="create_b210_sink(config: TxBlockConfig)&#xa;b210_sink.py&#xa;→ uhd.usrp_sink" style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="680" width="230" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="usrp-sink" value="uhd.usrp_sink (USRP B210)&#xa;设置: sample_rate, center_freq&#xa;      tx_gain, antenna, bandwidth" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="900" width="230" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="util-bg" value="辅助/报告函数 (tx_controller.py)" style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontStyle=1;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="55" width="360" height="500" as="geometry"/>
+                </mxCell>
+                <mxCell id="u1" value="format_config_report(config) → str&#xa;人类可读的配置参数汇总" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="100" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="u2" value="format_observation_checklist(config) → str&#xa;频谱仪 11 步观测安全操作清单" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="165" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="u3" value="format_lab_table_summary(config, device_report) → str&#xa;实验台摘要（含设备报告）" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="230" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="u4" value="uhd_find_devices_output() → str&#xa;子进程执行 uhd_find_devices，返回文本" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="295" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="u5" value="is_b210_available() → bool&#xa;检测是否发现可用 B210 设备" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="360" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="u6" value="read_uhd_sink_sample_rate(sink) → float|None&#xa;从硬件读回实际采样率并比对偏差" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="815" y="425" width="330" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="in-yaml" target="load-yaml" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="load-yaml" target="load-config" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="load-config" target="runtime-cfg" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="runtime-cfg" target="validate" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="validate" target="to-block" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="to-block" target="block-cfg" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="in-cli" target="apply-overrides" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="runtime-cfg" target="apply-overrides" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" parent="1" source="apply-overrides" target="validate" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="615" y="630"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="block-cfg" target="create-sink" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;" parent="1" source="create-sink" target="usrp-sink" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

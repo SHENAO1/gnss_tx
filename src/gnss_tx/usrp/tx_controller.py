@@ -506,6 +506,15 @@ def extract_uhd_device_field(device_report: str, field_name: str) -> str:
     return ""
 
 
+def _extract_serial_from_usrp_addr(usrp_addr: str) -> str:
+    """从 UHD 设备地址字符串中提取显式指定的 serial 值。"""
+    for part in usrp_addr.split(","):
+        key, sep, value = part.partition("=")
+        if sep and key.strip() == "serial":
+            return value.strip()
+    return ""
+
+
 def _signal_center_frequency_hz(config: TxRuntimeConfig) -> float:
     """
     计算实际的 RF 信号中心频率
@@ -575,8 +584,13 @@ def format_lab_table_summary(config: TxRuntimeConfig, device_report: str = "") -
     - 信号观测频率和基带偏移
     - 幅度和归一化状态
     """
-    # 尝试从设备报告中提取 serial 号，如果失败则用配置中的地址
-    serial = extract_uhd_device_field(device_report, "serial") or config.usrp_addr
+    # 若配置里已显式指定 serial，优先使用它，避免多设备时误抄扫描结果里的第一台。
+    # 仅当配置未固定具体设备时，才回退到 uhd_find_devices 的首个匹配字段。
+    serial = (
+        _extract_serial_from_usrp_addr(config.usrp_addr)
+        or extract_uhd_device_field(device_report, "serial")
+        or config.usrp_addr
+    )
     
     # 根据预览开关生成状态描述
     gr_flowgraph_field = "QT 预览开启" if config.enable_qt_preview else "不输出"
@@ -742,6 +756,11 @@ def format_uhd_tx_sample_rate_report(
         return "\n".join(lines)
 
     # 计算实际值与请求值的差异
+    # delta 保留原始浮点，Sps 和百分比都用同一个值，两列数字一致且信息完整。
+    # actual/.3f：保留到 mSps 量级，能把像 +0.026 Sps 这样的实际读回偏差直接显示出来，
+    #   方便和 delta 对照；同时不会引入过多低价值小数位。
+    # delta/.3f + delta_ratio/.8%：delta 是浮点运算结果（典型值约 0.026 Sps / 6.4 ppb），
+    #   保留 .3f 是为了让 Sps 和百分比两列保持一致，不会出现 "+0.0 Sps (+0.00000064%)" 的矛盾。
     actual_samples_per_chip = actual / GPS_CA_CHIP_RATE
     delta = actual - requested
     delta_ratio = delta / requested if requested else 0.0
@@ -749,7 +768,7 @@ def format_uhd_tx_sample_rate_report(
         [
             f"[INFO] {label} actual sample rate    : {actual:.3f} Sps ({actual / 1e6:.6f} Msps)",
             f"[INFO] {label} actual samples/chip   : {actual_samples_per_chip:.6f}",
-            f"[INFO] {label} sample-rate delta     : {delta:+.3f} Sps ({delta_ratio:+.6%})",
+            f"[INFO] {label} sample-rate delta     : {delta:+.3f} Sps ({delta_ratio:+.8%})",
         ]
     )
     return "\n".join(lines)

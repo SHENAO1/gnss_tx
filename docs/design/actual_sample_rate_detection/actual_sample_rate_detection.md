@@ -87,16 +87,18 @@ def format_uhd_tx_sample_rate_report(requested_sample_rate, sink, *, label):
     actual = read_uhd_sink_sample_rate(sink)
 
     # 计算偏差
+    # delta 保留原始浮点，Sps(.3f) 和百分比(.8%) 用同一个值，两列一致且信息完整。
+    # actual 用 .1f（整数分频器 actual 本身 sub-Hz 无意义），delta 用 .3f 保留浮点运算结果。
     delta = actual - requested
-    delta_ratio = delta / requested
+    delta_ratio = delta / requested if requested else 0.0
 
     # 格式化输出
     lines = [
         f"[INFO] {label} requested sample rate : {requested:.3f} Sps",
         f"[INFO] {label} requested samples/chip: {requested / GPS_CA_CHIP_RATE:.6f}",
-        f"[INFO] {label} actual sample rate    : {actual:.3f} Sps",
+        f"[INFO] {label} actual sample rate    : {actual:.1f} Sps",
         f"[INFO] {label} actual samples/chip   : {actual / GPS_CA_CHIP_RATE:.6f}",
-        f"[INFO] {label} sample-rate delta     : {delta:+.3f} Sps ({delta_ratio:+.6%})",
+        f"[INFO] {label} sample-rate delta     : {delta:+.3f} Sps ({delta_ratio:+.8%})",
     ]
 ```
 
@@ -109,9 +111,10 @@ def format_uhd_tx_sample_rate_report(requested_sample_rate, sink, *, label):
 ```
 [INFO] Python TX runtime requested sample rate : 4092000.000 Sps (4.092000 Msps)
 [INFO] Python TX runtime requested samples/chip: 4.000000
-[INFO] Python TX runtime actual sample rate    : 4092100.000 Sps (4.092100 Msps)
+[INFO] Python TX runtime actual sample rate    : 4092100.0 Sps (4.092100 Msps)
 [INFO] Python TX runtime actual samples/chip   : 4.000098
-[INFO] Python TX runtime sample-rate delta     : +100.000 Sps (+0.002441%)
+[INFO] Python TX runtime sample-rate delta     : +100.0 Sps (+0.00244141%)
+
 ```
 
 若无法读取实际采样率（如设备不支持），则输出警告：
@@ -120,6 +123,7 @@ def format_uhd_tx_sample_rate_report(requested_sample_rate, sink, *, label):
 [INFO] Python TX runtime requested sample rate : 4092000.000 Sps (4.092000 Msps)
 [INFO] Python TX runtime requested samples/chip: 4.000000
 [WARN] Python TX runtime actual sample-rate readback is unavailable.
+
 ```
 
 ---
@@ -168,3 +172,75 @@ samples_per_chip: 4
 ## GRC 窗口中的采样率标签说明
 
 GRC 流图界面左下角有一个"TX 采样率（配置值）Msps"标签（`gnss_tx_main.grc`），该标签显示的是**配置的请求值**，不是硬件实际值。硬件实际采样率只能通过终端或 GRC Console 的文字报告查看。
+
+---
+
+## 涉及的库说明
+
+实际采样率的读取完全依赖以下一条导入链，无需 `uhd` Python 包（即命令行工具的 Python 绑定），也无需直接调用任何 UHD C++ API。
+
+### `gnuradio.uhd`（GNU Radio 的 UHD 模块）
+
+```python
+# src/gnss_tx/usrp/b210_sink.py
+from gnuradio import uhd
+```
+
+- **来源**：GNU Radio 安装包的一部分（`gnuradio-uhd` 子包），不是独立的 `uhd` Python 包
+- **本质**：GNU Radio 用 SWIG/pybind11 对 C++ UHD 驱动的 Python 封装层
+- **作用**：提供 `uhd.usrp_sink`、`uhd.stream_args` 等 GNU Radio 块
+
+### `uhd.usrp_sink`（GNU Radio UHD 发射块）
+
+```python
+sink = uhd.usrp_sink(
+    device_addr,
+    uhd.stream_args(cpu_format="fc32", otw_format="sc16", channels=[0]),
+    "",
+)
+```
+
+- **类型**：GNU Radio 的 sink 块（`gr::block` 子类），不是原始 UHD 的 `multi_usrp`
+- **内部**：封装了 UHD C++ 库的 `uhd::usrp_sink_impl`，通过 USB 与 B210 通信
+- **数据格式**：
+  - `cpu_format="fc32"`：主机侧 complex float32（Python numpy 数组格式）
+  - `otw_format="sc16"`：USB 链路上 complex int16（节省带宽）
+
+### `sink.get_samp_rate()`（实际采样率回读接口）
+
+```python
+# src/gnss_tx/usrp/tx_controller.py
+actual = float(sink.get_samp_rate())
+```
+
+- **调用路径**：
+  ```
+  sink.get_samp_rate()                   ← GNU Radio Python 层
+      └─ uhd::usrp_sink_impl::get_samp_rate()   ← GNU Radio C++ 层
+             └─ uhd::multi_usrp::get_tx_rate()  ← UHD C++ 驱动
+                    └─ 通过 USB 查询 B210 固件实际执行的分频系数
+  ```
+- **返回值**：USRP 固件实际配置的采样率（浮点数，单位 Sps）
+- **为什么要在 `tb.start()` 之后调用**：`start()` 触发 GNU Radio 流图运行，UHD 才完成时钟锁定和分频器写入，此前 `get_samp_rate()` 返回的是初始默认值而非硬件实际值
+
+### 调用链汇总
+
+```
+run_tx.py
+  └─ tb.start()                              # GNU Radio 流图启动
+  └─ format_uhd_tx_sample_rate_report()      # tx_controller.py
+       └─ read_uhd_sink_sample_rate(sink)
+            └─ sink.get_samp_rate()          # gnuradio.uhd（Python 层）
+                 └─ UHD C++ 驱动             # 查询 B210 固件
+                      └─ USB → B210 硬件
+```
+
+### 与命令行 `uhd_find_devices` / `uhd_usrp_probe` 的关系
+
+| | `gnuradio.uhd`（本机制使用） | 命令行 UHD 工具 |
+|---|---|---|
+| 来源 | GNU Radio 安装 | UHD 独立安装（`uhd-host`）|
+| 底层 | 同一套 UHD C++ 库 | 同一套 UHD C++ 库 |
+| 用途 | 流图内读写硬件参数 | 设备发现与诊断 |
+
+两者底层共享同一套 UHD C++ 驱动，但入口不同。本机制走的是 GNU Radio 封装层，不依赖命令行工具是否安装。

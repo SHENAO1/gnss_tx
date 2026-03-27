@@ -11,6 +11,7 @@
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio import blocks
+from gnuradio import eng_notation
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.fft import window
@@ -19,7 +20,6 @@ import signal
 from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
-from gnuradio import eng_notation
 import sip
 from pathlib import Path
 _p = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
@@ -78,9 +78,10 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.samples_per_chip = samples_per_chip = 4
-        self.usrp_addr = usrp_addr = "type=b200"
-        self.tx_gain = tx_gain = 0.0
         self.samp_rate = samp_rate = 1.023e6 * samples_per_chip
+        self.usrp_addr = usrp_addr = "type=b200"
+        self.tx_gain = tx_gain = 0
+        self.samp_rate_label = samp_rate_label = (samp_rate / 1e6)
         self.prn_id = prn_id = 1
         self.nav_pattern = nav_pattern = "1 0 1 1 0 0 1 0"
         self.center_freq = center_freq = 100e6
@@ -104,6 +105,21 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         self.usrp_sink.set_antenna("TX/RX", 0)
         self.usrp_sink.set_bandwidth(float(samp_rate), 0)
         print(format_uhd_tx_sample_rate_report(samp_rate, self.usrp_sink, label="GNU Radio USRP sink"))
+        self._samp_rate_label_tool_bar = Qt.QToolBar(self)
+
+        if None:
+            self._samp_rate_label_formatter = None
+        else:
+            self._samp_rate_label_formatter = lambda x: eng_notation.num_to_str(x)
+
+        self._samp_rate_label_tool_bar.addWidget(Qt.QLabel("TX 采样率（配置值）Msps"))
+        self._samp_rate_label_label = Qt.QLabel(str(self._samp_rate_label_formatter(self.samp_rate_label)))
+        self._samp_rate_label_tool_bar.addWidget(self._samp_rate_label_label)
+        self.top_grid_layout.addWidget(self._samp_rate_label_tool_bar, 1, 0, 1, 2)
+        for r in range(1, 2):
+            self.top_grid_layout.setRowStretch(r, 1)
+        for c in range(0, 2):
+            self.top_grid_layout.setColumnStretch(c, 1)
         self.qt_time = qtgui.time_sink_c(
             512, #size
             samp_rate, #samp_rate
@@ -241,6 +257,17 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         self.samples_per_chip = samples_per_chip
         self.set_samp_rate(1.023e6 * self.samples_per_chip)
 
+    def get_samp_rate(self):
+        return self.samp_rate
+
+    def set_samp_rate(self, samp_rate):
+        self.samp_rate = samp_rate
+        self.set_samp_rate_label((self.samp_rate / 1e6))
+        self.qt_freq.set_frequency_range(self.center_freq, self.samp_rate)
+        self.qt_time.set_samp_rate(self.samp_rate)
+        self.usrp_sink.set_samp_rate(self.samp_rate)
+        self.usrp_sink.set_bandwidth(self.samp_rate, 0)
+
     def get_usrp_addr(self):
         return self.usrp_addr
 
@@ -254,27 +281,24 @@ class gnss_tx_main(gr.top_block, Qt.QWidget):
         self.tx_gain = tx_gain
         self.usrp_sink.set_gain(self.tx_gain, 0)
 
-    def get_samp_rate(self):
-        return self.samp_rate
+    def get_samp_rate_label(self):
+        return self.samp_rate_label
 
-    def set_samp_rate(self, samp_rate):
-        self.samp_rate = samp_rate
-        self.qt_time.set_samp_rate(self.samp_rate)
-        self.qt_freq.set_frequency_range(self.center_freq, self.samp_rate)
-        self.usrp_sink.set_samp_rate(self.samp_rate)
-        self.usrp_sink.set_bandwidth(self.samp_rate, 0)
-
-    def get_nav_pattern(self):
-        return self.nav_pattern
-
-    def set_nav_pattern(self, nav_pattern):
-        self.nav_pattern = nav_pattern
+    def set_samp_rate_label(self, samp_rate_label):
+        self.samp_rate_label = samp_rate_label
+        Qt.QMetaObject.invokeMethod(self._samp_rate_label_label, "setText", Qt.Q_ARG("QString", str(self._samp_rate_label_formatter(self.samp_rate_label))))
 
     def get_prn_id(self):
         return self.prn_id
 
     def set_prn_id(self, prn_id):
         self.prn_id = prn_id
+
+    def get_nav_pattern(self):
+        return self.nav_pattern
+
+    def set_nav_pattern(self, nav_pattern):
+        self.nav_pattern = nav_pattern
 
     def get_center_freq(self):
         return self.center_freq

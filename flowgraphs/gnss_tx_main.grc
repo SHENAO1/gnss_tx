@@ -1,9 +1,11 @@
 options:
   parameters:
     author: ''
+    catch_exceptions: 'True'
     category: Custom
     cmake_opt: ''
-    comment: 'Single-satellite GPS L1 C/A spread-spectrum continuous transmit mirror flowgraph for B210, QT preview, and lab bring-up.'
+    comment: Single-satellite GPS L1 C/A spread-spectrum continuous transmit mirror
+      flowgraph for B210, QT preview, and lab bring-up.
     copyright: ''
     description: ''
     gen_cmake: 'Off'
@@ -24,27 +26,24 @@ options:
     title: GNSS TX Single-Sat B210
     window_size: 1800,1200
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [8, 11]
     rotation: 0
     state: enabled
 
 blocks:
-- name: samp_rate
+- name: amplitude
   id: variable
   parameters:
     comment: ''
-    value: 1.023e6 * samples_per_chip
+    value: '1.0'
   states:
-    coordinate: [88, 72]
-    rotation: 0
-    state: enabled
-- name: samples_per_chip
-  id: variable
-  parameters:
-    comment: ''
-    value: '4'
-  states:
-    coordinate: [88, 24]
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 24]
     rotation: 0
     state: enabled
 - name: center_freq
@@ -53,34 +52,10 @@ blocks:
     comment: ''
     value: 100e6
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [264, 24]
-    rotation: 0
-    state: enabled
-- name: tx_gain
-  id: variable
-  parameters:
-    comment: ''
-    value: '0.0'
-  states:
-    coordinate: [264, 72]
-    rotation: 0
-    state: enabled
-- name: amplitude
-  id: variable
-  parameters:
-    comment: ''
-    value: '1.0'
-  states:
-    coordinate: [440, 24]
-    rotation: 0
-    state: enabled
-- name: usrp_addr
-  id: variable
-  parameters:
-    comment: ''
-    value: '"type=b200"'
-  states:
-    coordinate: [440, 72]
     rotation: 0
     state: enabled
 - name: nav_pattern
@@ -89,6 +64,9 @@ blocks:
     comment: ''
     value: '"1 0 1 1 0 0 1 0"'
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [632, 24]
     rotation: 0
     state: enabled
@@ -98,93 +76,170 @@ blocks:
     comment: ''
     value: '1'
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [632, 72]
     rotation: 0
     state: enabled
-- name: safety_note
-  id: note
+- name: samp_rate
+  id: variable
   parameters:
     comment: ''
-    note: "This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit chain.\nIt supports single-satellite mode: select any GPS L1 C/A PRN (1~32) via the prn_id variable.\nThe custom source replays a precomputed spread-spectrum buffer continuously to reduce USRP underflows.\nSignal type: single-satellite GPS L1 C/A spread-spectrum BPSK complex baseband.\nFor multi-PRN combined transmission (all 32 PRNs superimposed), use run_tx.py with configs/tx_b210_all32prn.yaml.\nInternal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain and the output multiply_const block.\nCheck QT GUI time/frequency views before connecting the spectrum analyzer.\nAnalyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain."
+    value: 1.023e6 * samples_per_chip
   states:
-    coordinate: [840, 20]
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [88, 72]
     rotation: 0
     state: enabled
-- name: prn_source
-  id: gnss_tx_gps_l1_ca_source
+- name: samp_rate_label
+  id: variable_qtgui_label
   parameters:
-    amplitude: '1.0'
-    initial_code_phase: '0'
-    initial_nav_bit_index: '0'
-    initial_nav_epoch: '0'
-    nav_pattern: nav_pattern
-    prn_id: prn_id
-    samples_per_chip: samples_per_chip
+    comment: "\u914D\u7F6E\u91C7\u6837\u7387\u6807\u7B7E\uFF1A\u663E\u793A GRC \u53D8\
+      \u91CF samp_rate\uFF08\u8BF7\u6C42\u503C\uFF09\u3002 \u5B9E\u9645 UHD \u786C\
+      \u4EF6\u786E\u8BA4\u91C7\u6837\u7387\uFF08\u7ECF\u6574\u6570\u5206\u9891\u820D\
+      \u5165\u540E\uFF09 \u901A\u8FC7 sink.get_samp_rate() \u8BFB\u56DE\uFF0C\u5728\
+      \ run_tx.py \u7EC8\u7AEF\u6253\u5370\u3002"
+    formatter: None
+    gui_hint: 1,0,1,2
+    label: "TX \u91C7\u6837\u7387\uFF08\u914D\u7F6E\u503C\uFF09Msps"
+    type: real
+    value: samp_rate / 1e6
   states:
-    coordinate: [192, 272]
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [88, 480]
+    rotation: 0
+    state: enabled
+- name: samples_per_chip
+  id: variable
+  parameters:
+    comment: ''
+    value: '4'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [88, 24]
+    rotation: 0
+    state: enabled
+- name: tx_gain
+  id: variable
+  parameters:
+    comment: ''
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [264, 72]
+    rotation: 0
+    state: enabled
+- name: usrp_addr
+  id: variable
+  parameters:
+    comment: ''
+    value: '"type=b200"'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 72]
     rotation: 0
     state: enabled
 - name: amplitude_scale
   id: blocks_multiply_const_vxx
   parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
     const: amplitude
+    maxoutbuf: '0'
+    minoutbuf: '0'
     type: complex
     vlen: '1'
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [432, 272]
     rotation: 0
     state: enabled
-- name: qt_time
-  id: qtgui_time_sink_x
+- name: prn_source
+  id: gnss_tx_gps_l1_ca_source
   parameters:
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: blue
-    color2: red
-    ctrlpanel: 'False'
-    entags: 'False'
-    grid: 'True'
-    gui_hint: 0,0,1,1
-    label1: I
-    label2: Q
-    legend: 'True'
-    name: '"Selected PRN Baseband Time"'
-    nconnections: '1'
-    size: '512'
-    srate: samp_rate
-    stemplot: 'False'
-    tr_chan: '0'
-    tr_delay: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: complex
-    update_time: '0.10'
-    yunit: '""'
-    ylabel: Amplitude
-    ymax: '1.2'
-    ymin: '-1.2'
+    affinity: ''
+    alias: ''
+    amplitude: '1.0'
+    comment: ''
+    initial_code_phase: '0'
+    initial_nav_bit_index: '0'
+    initial_nav_epoch: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nav_pattern: nav_pattern
+    prn_id: prn_id
+    samples_per_chip: samples_per_chip
   states:
-    coordinate: [704, 216]
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [192, 272]
     rotation: 0
     state: enabled
 - name: qt_freq
   id: qtgui_freq_sink_x
   parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
     autoscale: 'False'
     average: '0.2'
     axislabels: 'True'
     bw: samp_rate
     color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
     ctrlpanel: 'False'
     fc: center_freq
     fftsize: '2048'
+    freqhalf: 'True'
     grid: 'True'
     gui_hint: 0,1,1,1
     label: Relative Gain
     label1: '"Selected PRN RF Preview"'
+    label10: ''''''
+    label2: ''''''
+    label3: ''''''
+    label4: ''''''
+    label5: ''''''
+    label6: ''''''
+    label7: ''''''
+    label8: ''''''
+    label9: ''''''
     legend: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
     name: '"Selected PRN Baseband Spectrum"'
     nconnections: '1'
     norm_window: 'False'
@@ -196,49 +251,182 @@ blocks:
     type: complex
     units: dB
     update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
     wintype: window.WIN_BLACKMAN_hARRIS
     ymax: '10'
     ymin: '-120'
   states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [704, 376]
+    rotation: 0
+    state: enabled
+- name: qt_time
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'False'
+    entags: 'False'
+    grid: 'True'
+    gui_hint: 0,0,1,1
+    label1: I
+    label10: Signal 10
+    label2: Q
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: '"Selected PRN Baseband Time"'
+    nconnections: '1'
+    size: '512'
+    srate: samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '1.2'
+    ymin: '-1.2'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [704, 216]
+    rotation: 0
+    state: enabled
+- name: safety_note
+  id: note
+  parameters:
+    alias: ''
+    comment: ''
+    note: 'This flowgraph is a GNU Radio Companion mirror of the Python runtime transmit
+      chain.
+
+      It supports single-satellite mode: select any GPS L1 C/A PRN (1~32) via the
+      prn_id variable.
+
+      The custom source replays a precomputed spread-spectrum buffer continuously
+      to reduce USRP underflows.
+
+      Signal type: single-satellite GPS L1 C/A spread-spectrum BPSK complex baseband.
+
+      For multi-PRN combined transmission (all 32 PRNs superimposed), use run_tx.py
+      with configs/tx_b210_all32prn.yaml.
+
+      Internal source amplitude stays at 1.0; RF strength is adjusted here with tx_gain
+      and the output multiply_const block.
+
+      Check QT GUI time/frequency views before connecting the spectrum analyzer.
+
+      Analyzer max input: 30 dBm, 50 V DC, 50 ohm. Start with low tx_gain.'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [840, 20]
     rotation: 0
     state: enabled
 - name: usrp_sink
   id: gnss_tx_usrp_sink
   parameters:
+    affinity: ''
+    alias: ''
     ant0: '"TX/RX"'
     bw0: samp_rate
     center_freq0: center_freq
+    comment: ''
     dev_addr: usrp_addr
     gain0: tx_gain
     samp_rate: samp_rate
     type: fc32
   states:
-    coordinate: [704, 552]
-    rotation: 0
-    state: enabled
-
-- name: samp_rate_label
-  id: variable_qtgui_label
-  parameters:
-    comment: '配置采样率标签：显示 GRC 变量 samp_rate（请求值）。
-      实际 UHD 硬件确认采样率（经整数分频舍入后）
-      通过 sink.get_samp_rate() 读回，在 run_tx.py 终端打印。'
-    formatter: None
-    gui_hint: 1,0,1,2
-    label: TX 采样率（配置值）Msps
-    type: real
-    value: samp_rate / 1e6
-  states:
-    coordinate: [88, 480]
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [728, 548.0]
     rotation: 0
     state: enabled
 
 connections:
-- [prn_source, '0', amplitude_scale, '0']
-- [amplitude_scale, '0', qt_time, '0']
 - [amplitude_scale, '0', qt_freq, '0']
+- [amplitude_scale, '0', qt_time, '0']
 - [amplitude_scale, '0', usrp_sink, '0']
+- [prn_source, '0', amplitude_scale, '0']
 
 metadata:
   file_format: 1
+  grc_version: 3.10.9.2
