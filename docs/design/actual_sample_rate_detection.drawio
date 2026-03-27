@@ -1,122 +1,122 @@
-<mxfile host="app.diagrams.net" modified="2026-03-27T00:00:00.000Z" agent="Codex" version="24.7.17">
-  <diagram id="actual-sample-rate-detection" name="实际采样率检测机制">
-    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0" adaptiveColors="auto">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-
-        <!-- 泳道 -->
-        <mxCell id="cfg_lane" value="配置层" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=30;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#DAE8FC;fontStyle=1;pointerEvents=0;" vertex="1" parent="1">
-          <mxGeometry x="20" y="20" width="280" height="960" as="geometry" />
-        </mxCell>
-        <mxCell id="call_lane" value="调用链" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=30;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#D5E8D4;fontStyle=1;pointerEvents=0;" vertex="1" parent="1">
-          <mxGeometry x="320" y="20" width="1000" height="960" as="geometry" />
-        </mxCell>
-        <mxCell id="hw_lane" value="硬件层" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=30;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#F8CECC;fontStyle=1;pointerEvents=0;" vertex="1" parent="1">
-          <mxGeometry x="1340" y="20" width="440" height="960" as="geometry" />
-        </mxCell>
-
-        <!-- 配置层节点 -->
-        <mxCell id="cfg_yaml" value="YAML 配置文件&#xa;configs/*.yaml&#xa;samples_per_chip = 4&#xa;（可直接指定）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="cfg_lane">
-          <mxGeometry x="20" y="50" width="240" height="100" as="geometry" />
-        </mxCell>
-        <mxCell id="cfg_derive" value="采样率派生/验证&#xa;tx_controller.py:210&#xa;sample_rate = chip_rate × N&#xa;= 1.023 MHz × 4 = 4,092,000 Sps" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="cfg_lane">
-          <mxGeometry x="20" y="220" width="240" height="110" as="geometry" />
-        </mxCell>
-
-        <!-- 配置层内部边 -->
-        <mxCell id="e_cfg_derive" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="cfg_lane" source="cfg_yaml" target="cfg_derive">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- 调用链节点 -->
-        <mxCell id="tb_start" value="tb.start()&#xa;GNU Radio 流图启动&#xa;USRP 时钟锁定完成" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="20" y="50" width="200" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="scene_py" value="场景 A：Python 脚本&#xa;scripts/run_tx.py:119&#xa;启动后立即调用报告函数" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="260" y="50" width="220" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="scene_grc" value="场景 B：GRC 块&#xa;gnss_tx_usrp_sink.block.yml:72&#xa;块初始化完成时自动调用" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="520" y="50" width="220" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="fmt_report" value="format_uhd_tx_sample_rate_report(requested, sink, label)&#xa;tx_controller.py:678&#xa;传入请求采样率和 sink 对象" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="260" y="210" width="480" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="read_rate" value="read_uhd_sink_sample_rate(sink)&#xa;tx_controller.py:643&#xa;getattr 防御性检查 → sink.get_samp_rate()&#xa;⚠ 必须在 tb.start() 之后调用，时钟已锁定" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="260" y="370" width="480" height="100" as="geometry" />
-        </mxCell>
-        <mxCell id="warn_node" value="[WARN]&#xa;actual sample-rate&#xa;readback is unavailable.&#xa;（sink=None 或设备不支持）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=#D6B656;fillColor=#FFF2CC;" vertex="1" parent="call_lane">
-          <mxGeometry x="20" y="420" width="200" height="100" as="geometry" />
-        </mxCell>
-        <mxCell id="delta_calc" value="计算偏差并格式化报告&#xa;delta = actual - requested&#xa;delta_ratio = delta / requested" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="260" y="550" width="480" height="90" as="geometry" />
-        </mxCell>
-        <mxCell id="out_py" value="打印到终端 stdout&#xa;（场景 A）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="260" y="710" width="220" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="out_grc" value="打印到 GRC Console 面板&#xa;（场景 B）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="call_lane">
-          <mxGeometry x="520" y="710" width="220" height="80" as="geometry" />
-        </mxCell>
-
-        <!-- 调用链内部边 -->
-        <mxCell id="e_tb_py" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="tb_start" target="scene_py">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_tb_grc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="tb_start" target="scene_grc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_py_fmt" value="调用" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="scene_py" target="fmt_report">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_grc_fmt" value="调用" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="scene_grc" target="fmt_report">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_fmt_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="fmt_report" target="read_rate">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_read_warn" value="unavailable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;dashed=1;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="read_rate" target="warn_node">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_delta_py" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="delta_calc" target="out_py">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_delta_grc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="call_lane" source="delta_calc" target="out_grc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- 硬件层节点 -->
-        <mxCell id="uhd_set" value="USRP Sink 初始化&#xa;b210_sink.py:48&#xa;sink.set_samp_rate(requested)&#xa;UHD 驱动选择最接近的整数分频系数" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="hw_lane">
-          <mxGeometry x="20" y="50" width="400" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="usrp_div" value="USRP 固件整数分频&#xa;参考时钟 200 MHz / 整数 N&#xa;实际采样率 ≈ 4,092,000 Sps&#xa;（偏差通常 &lt; 0.01%）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="hw_lane">
-          <mxGeometry x="20" y="280" width="400" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="actual_back" value="实际采样率&#xa;硬件固件确定的真实值&#xa;通过 get_samp_rate() 回读至调用链" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;" vertex="1" parent="hw_lane">
-          <mxGeometry x="20" y="490" width="400" height="90" as="geometry" />
-        </mxCell>
-
-        <!-- 硬件层内部边 -->
-        <mxCell id="e_uhd_div" value="整数分频" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="hw_lane" source="uhd_set" target="usrp_div">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_div_actual" value="确定实际值" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="hw_lane" source="usrp_div" target="actual_back">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- 跨泳道边 (parent="1") -->
-        <mxCell id="e_cfg_fmt" value="requested_rate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="1" source="cfg_derive" target="fmt_report">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_cfg_uhd" value="set_samp_rate(requested)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="1" source="cfg_derive" target="uhd_set">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_read_actual" value="sink.get_samp_rate()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" edge="1" parent="1" source="read_rate" target="actual_back">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_actual_delta" value="actual_rate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;dashed=1;endArrow=block;endFill=1;" edge="1" parent="1" source="actual_back" target="delta_calc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="actual-sample-rate-detection" name="实际采样率检测机制">
+        <mxGraphModel dx="632" dy="292" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0" adaptiveColors="auto">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="cfg_lane" value="配置层" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=40;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#DAE8FC;fontStyle=1;fontSize=16;pointerEvents=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="20" width="280" height="960" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg_yaml" value="&lt;b&gt;YAML 配置文件&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;configs/*.yaml&lt;/font&gt;&#xa;samples_per_chip = 4&#xa;（可直接指定）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="cfg_lane" vertex="1">
+                    <mxGeometry x="20" y="55" width="240" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="cfg_derive" value="&lt;b&gt;采样率派生/验证&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;tx_controller.py&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:210&lt;/font&gt;&#xa;sample_rate = chip_rate × N&#xa;= 1.023 MHz × 4 = 4,092,000 Sps" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="cfg_lane" vertex="1">
+                    <mxGeometry x="20" y="225" width="240" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cfg_derive" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="cfg_lane" source="cfg_yaml" target="cfg_derive" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="call_lane" value="调用链" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=40;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#D5E8D4;fontStyle=1;fontSize=16;pointerEvents=0;" parent="1" vertex="1">
+                    <mxGeometry x="320" y="20" width="1000" height="960" as="geometry"/>
+                </mxCell>
+                <mxCell id="tb_start" value="&lt;b&gt;tb.start()&lt;/b&gt;&#xa;GNU Radio 流图启动&#xa;USRP 时钟锁定完成" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="20" y="55" width="200" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="scene_py" value="&lt;b&gt;场景 A：Python 脚本&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;scripts/run_tx.py&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:119&lt;/font&gt;&#xa;启动后立即调用报告函数" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="260" y="110" width="220" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="scene_grc" value="&lt;b&gt;场景 B：GRC 块&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;gnss_tx_usrp_sink.block.yml&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:72&lt;/font&gt;&#xa;块初始化完成时自动调用" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="520" y="55" width="220" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="fmt_report" value="&lt;b&gt;&lt;font color=&quot;#6a9153&quot;&gt;format_uhd_tx_sample_rate_report(requested, sink, label)&lt;/font&gt;&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;tx_controller.py&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:678&lt;/font&gt;&#xa;传入请求采样率和 sink 对象" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="250" y="315" width="480" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="read_rate" value="&lt;b&gt;&lt;font color=&quot;#6a9153&quot;&gt;read_uhd_sink_sample_rate(sink)&lt;/font&gt;&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;tx_controller.py&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:643&lt;/font&gt;&#xa;getattr 防御性检查 → &lt;font color=&quot;#6a9153&quot;&gt;sink.get_samp_rate()&lt;/font&gt;&#xa;⚠ 必须在 tb.start() 之后调用，时钟已锁定" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="250" y="490" width="480" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="warn_node" value="&lt;b&gt;[WARN]&lt;/b&gt;&#xa;actual sample-rate&#xa;readback is unavailable.&#xa;（sink=None 或设备不支持）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=#D6B656;fillColor=#FFF2CC;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="10" y="595" width="210" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="delta_calc" value="&lt;b&gt;计算偏差并格式化报告&lt;/b&gt;&#xa;delta = actual - requested&#xa;delta_ratio = delta / requested" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="250" y="665" width="480" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="out_py" value="&lt;b&gt;打印到终端 stdout&lt;/b&gt;&#xa;（场景 A）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="250" y="865" width="220" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="out_grc" value="&lt;b&gt;打印到 GRC Console 面板&lt;/b&gt;&#xa;（场景 B）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="call_lane" vertex="1">
+                    <mxGeometry x="510" y="865" width="220" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_tb_py" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="call_lane" source="tb_start" target="scene_py" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_tb_grc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="call_lane" source="tb_start" target="scene_grc" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_py_fmt" value="&lt;b&gt;调用&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;endArrow=block;endFill=1;fillColor=#d5e8d4;strokeWidth=2;fontSize=13;" parent="call_lane" source="scene_py" target="fmt_report" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="370" y="260"/>
+                            <mxPoint x="490" y="260"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_grc_fmt" value="&lt;b&gt;调用&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;endArrow=block;endFill=1;fillColor=#d5e8d4;strokeWidth=2;fontSize=13;" parent="call_lane" source="scene_grc" target="fmt_report" edge="1">
+                    <mxGeometry x="0.2258" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="260"/>
+                            <mxPoint x="490" y="260"/>
+                        </Array>
+                        <mxPoint x="-1" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_fmt_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="call_lane" source="fmt_report" target="read_rate" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_read_warn" value="unavailable" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#D6B656;dashed=1;endArrow=block;endFill=1;fontSize=13;" parent="call_lane" source="read_rate" target="warn_node" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_delta_py" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="call_lane" source="delta_calc" target="out_py" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_delta_grc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;" parent="call_lane" source="delta_calc" target="out_grc" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="hw_lane" value="硬件层" style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=40;container=1;collapsible=0;recursiveResize=0;strokeColor=default;fillColor=#F8CECC;fontStyle=1;fontSize=16;pointerEvents=0;" parent="1" vertex="1">
+                    <mxGeometry x="1340" y="20" width="440" height="960" as="geometry"/>
+                </mxCell>
+                <mxCell id="uhd_set" value="&lt;b&gt;USRP Sink 初始化&lt;/b&gt;&#xa;&lt;font color=&quot;#5b8dc9&quot;&gt;b210_sink.py&lt;/font&gt;&lt;font color=&quot;#d79b00&quot;&gt;:48&lt;/font&gt;&#xa;&lt;font color=&quot;#6a9153&quot;&gt;sink.set_samp_rate(requested)&lt;/font&gt;&#xa;UHD 驱动选择最接近的整数分频系数" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="hw_lane" vertex="1">
+                    <mxGeometry x="20" y="55" width="400" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="usrp_div" value="&lt;b&gt;USRP 固件整数分频&lt;/b&gt;&#xa;参考时钟 200 MHz / 整数 N&#xa;实际采样率 ≈ 4,092,000 Sps&#xa;（偏差通常 &lt; 0.01%）" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="hw_lane" vertex="1">
+                    <mxGeometry x="20" y="325" width="400" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="actual_back" value="&lt;b&gt;实际采样率&lt;/b&gt;&#xa;硬件固件确定的真实值&#xa;通过 &lt;font color=&quot;#6a9153&quot;&gt;get_samp_rate()&lt;/font&gt; 回读至调用链" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacing=6;strokeColor=default;fillColor=#ffffff;fontSize=14;" parent="hw_lane" vertex="1">
+                    <mxGeometry x="20" y="495" width="400" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_div_actual" value="确定实际值" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;fontSize=13;" parent="hw_lane" source="usrp_div" target="actual_back" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_uhd_div" value="&lt;b&gt;整数分频&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;endArrow=block;endFill=1;fillColor=#dae8fc;strokeWidth=2;fontSize=13;" parent="hw_lane" source="uhd_set" target="usrp_div" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cfg_fmt" value="requested_rate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;endArrow=block;endFill=1;fillColor=#dae8fc;strokeWidth=2;fontSize=13;" parent="1" source="cfg_derive" target="fmt_report" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_cfg_uhd" value="set_samp_rate(requested)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;endArrow=block;endFill=1;fillColor=#dae8fc;strokeWidth=2;fontSize=13;" parent="1" source="cfg_derive" target="uhd_set" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_read_actual" value="sink.get_samp_rate()" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;endArrow=block;endFill=1;fontSize=13;" parent="1" source="read_rate" target="actual_back" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_actual_delta" value="actual_rate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;dashed=1;endArrow=block;endFill=1;fontSize=13;" parent="1" source="actual_back" target="delta_calc" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1560" y="640"/>
+                            <mxPoint x="810" y="640"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
