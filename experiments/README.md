@@ -76,6 +76,29 @@ source .venv/bin/activate
   - Companion 主流图是 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)。
   - Companion 是 Python runtime 的镜像入口，不是新的配置真源。
 
+## 当前文件列表
+
+| 文件 | 类型 | 描述 |
+|------|------|------|
+| `2026-03-22_prn1_visible_spectrum_checkpoint.md` | checkpoint | PRN1 在频谱仪上可见宽带包络的实验事实（tx_gain=10, amplitude=0.5） |
+| `2026-03-22_tx_visibility_sweep_draft.md` | draft | 2026-03-22 发射参数试验记录草稿 |
+| `2026-03-22_task_archive.md` | archive | 2026-03-22 当日任务归档（频谱可见性确认 + 文档生成） |
+| `2026-03-24_dual_usrp_loopback_procedure.md` | checklist | 双 USRP 空中接收（OTA）操作流程，含增益调整建议和故障排查 |
+| `tx_visibility_sweep_checklist.md` | checklist | PRN1 发射参数试验分步执行清单 |
+| `observation_log_template.md` | template | 通用射频观察记录模板 |
+| `tx_visibility_sweep_template.csv` | csv | 参数扫描表格（16 行，待填空） |
+| `plans/INDEX.md` | index | 所有计划文件的汇总索引与开发日志 |
+| `plans/2026-03-27/2026-03-27_ber_loopback_tx_plan.md` | plan | 发射端闭环 BER 验证计划（对应接收端计划见 GNSS_RX） |
+
+## 跨项目计划参考
+
+本项目实验计划与 GNSS_RX 紧密配合，以下为跨项目关联文档：
+
+| 计划 | 本项目（TX） | 对应项目（RX） |
+|------|------------|---------------|
+| BER 闭环验证 | `plans/2026-03-27/2026-03-27_ber_loopback_tx_plan.md` | `GNSS_RX/experiments/plans/2026-03-27/2026-03-27_ber_loopback_rx_plan.md` |
+| TX/RX 综合改进路线图 | — | `GNSS_RX/experiments/plans/2026-03-26_tx_rx_improvement_plan.md` |
+
 ## 安全基线、当前可见谱配置与历史检查点
 
 - 安全基线
