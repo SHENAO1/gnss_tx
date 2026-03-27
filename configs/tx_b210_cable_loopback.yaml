@@ -1,17 +1,20 @@
 # 射频线直连回环测试 TX 配置
 #
 # ┌─────────────────────────────────────────────────────────────────────┐
-# │  无衰减器直连安全计算（当前默认方案）                                 │
+# │  无衰减器直连安全计算（2026-03-27 实测修正版）                        │
 # │                                                                     │
-# │  B210 TX 输出估算：tx_gain - 79.75 dBm（100 MHz 附近）              │
+# │  实测公式（100 MHz，serial=193982）：                                │
+# │    P_tx（总功率）≈ tx_gain − 66 dBm（amplitude=1.0）                │
+# │    注：原公式 offset=79.75 在 100 MHz 误差 14 dB，B210 低频增益更高  │
+# │                                                                     │
 # │  线缆插入损耗：约 1 dB（0.5 m SMA 线，100 MHz）                     │
-# │  RX 输入 = tx_gain - 80.75 dBm                                      │
+# │  RX 输入 ≈ tx_gain − 67 dBm                                        │
 # │                                                                     │
 # │  AD9361 RX 绝对最大输入：+2.5 dBm（超过将永久损坏）                  │
 # │  目标 RX 输入 ≤ −10 dBm（保守安全裕量 12.5 dB）                     │
-# │  → tx_gain 上限 = −10 + 80.75 ≈ 70 dB  ← 当前默认值               │
+# │  → tx_gain 上限 = −10 + 67 = 57 dB，保守取 50 dB  ← 当前默认值    │
 # │                                                                     │
-# │  使用 30 dB 衰减器时：tx_gain 可提升至 89 dB（全增益）               │
+# │  使用 30 dB 衰减器时：tx_gain 可提升至 80 dB                        │
 # └─────────────────────────────────────────────────────────────────────┘
 #
 # 接线：B210_TX(TX/RX 端口) → [同轴线缆] → B210_RX(RX2 端口)
@@ -19,14 +22,14 @@
 # 对应计划文档：experiments/plans/2026-03-27/ber_loopback_tx/2026-03-27_ber_loopback_tx_plan.md
 prn_id: 1
 signal_mode: "spread"
-# usrp_addr: "serial=193982"       
-usrp_addr: "serial=8003272"             # 如需指定设备：serial=<TX_SERIAL>
+usrp_addr: "serial=193982"       
+# usrp_addr: "serial=8003272"             # 如需指定设备：serial=<TX_SERIAL>
 center_freq: 100000000.0           # 100 MHz 调试频点
 # center_freq: 1575420000.0        # GPS L1 真实频点（升级目标，取消注释并同步修改 RX 配置）
 samples_per_chip: 4
 sample_rate: 4092000.0
-tx_gain: 70.0                      # 无衰减器直连上限（RX 输入约 −11 dBm，安全裕量 13.5 dB）
-                                   # 有 30 dB 衰减器时可提升至 89.0
+tx_gain: 50.0                      # 无衰减器直连推荐值（实测 RX 输入约 −16 dBm，安全裕量 6 dB）
+                                   # 硬性上限 57 dB（保守取 50），有 30 dB 衰减器时可提升至 80 dB
 amplitude: 1.0
 antenna: "TX/RX"
 bandwidth: 4092000.0
