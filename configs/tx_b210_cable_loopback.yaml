@@ -14,12 +14,12 @@
 # │  目标 RX 输入 ≤ −10 dBm（保守安全裕量 12.5 dB）                     │
 # │  → tx_gain 上限 = −10 + 67 = 57 dB，保守取 50 dB  ← 当前默认值    │
 # │                                                                     │
-# │  使用 30 dB 衰减器时：tx_gain 可提升至 80 dB                        │
+# │  使用固定衰减器时：可在保持 RX 安全的前提下进一步提高 tx_gain       │
 # └─────────────────────────────────────────────────────────────────────┘
 #
 # 接线：B210_TX(TX/RX 端口) → [同轴线缆] → B210_RX(RX2 端口)
 # 对应 RX 配置：GNSS_RX/configs/rx_cable_loopback.yaml
-# 对应计划文档：experiments/plans/2026-03-27/ber_loopback_tx/2026-03-27_ber_loopback_tx_plan.md
+# 对应计划文档：experiments/plans/2026-03-28/ber_loopback_tx/2026-03-28_ber_loopback_tx_plan.md
 prn_id: 1
 signal_mode: "spread"
 usrp_addr: "serial=193982"       
@@ -28,8 +28,8 @@ center_freq: 100000000.0           # 100 MHz 调试频点
 # center_freq: 1575420000.0        # GPS L1 真实频点（升级目标，取消注释并同步修改 RX 配置）
 samples_per_chip: 4
 sample_rate: 4092000.0
-tx_gain: 50.0                      # 无衰减器直连推荐值（实测 RX 输入约 −16 dBm，安全裕量 6 dB）
-                                   # 硬性上限 57 dB（保守取 50），有 30 dB 衰减器时可提升至 80 dB
+tx_gain: 50.0                      # 无衰减器直连推荐值（实测 RX 输入约 −17 dBm，安全裕量约 7 dB）
+                                   # 硬性上限 57 dB（保守取 50）；若加固定衰减器可另行上调
 amplitude: 1.0
 antenna: "TX/RX"
 bandwidth: 4092000.0
