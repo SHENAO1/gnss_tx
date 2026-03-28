@@ -185,7 +185,61 @@ env PYTHONPATH=src python3 scripts/run_tx.py \
 
 ---
 
-## 七、当前默认命令
+## 七、附录：两台设备直连说明
+
+当使用**两台独立 USRP B210** 做直连 BER 测试时（而非同一台设备的 TX/RX → RX2 自环），需注意以下差异：
+
+### 7.1 设备地址冲突
+
+两台设备同时接入时，RX 端的 `usrp_addr: "type=b200"` 会随机抢占任意一台，导致 TX 和 RX 争用同一设备。
+
+解决方法：RX 端必须明确指定 serial：
+
+```bash
+# RX 端启动时加 --usrp-addr 覆盖配置文件
+cd /home/shen/projects/GNSS_RX
+env PYTHONPATH=src python3 scripts/record_rx.py \
+    --config configs/rx_cable_loopback.yaml \
+    --usrp-addr "serial=8003272" \
+    --duration 30 \
+    --capture-mode single
+```
+
+或直接修改 `GNSS_RX/configs/rx_cable_loopback.yaml`：
+
+```yaml
+usrp_addr: "serial=8003272"    # 指定 RX 设备
+```
+
+TX 端保持 `usrp_addr: "serial=193982"`（当前配置已固定）。
+
+### 7.2 独立时钟导致频率偏移
+
+两台独立 B210 各自使用内部时钟，两者之间会存在几 Hz 至几十 Hz 的频率偏移。RX 端的 FLL+PLL 跟踪环负责补偿这一偏移。
+
+若 BER 偏高，优先检查：
+- MATLAB tracking 图中 FLL 频率估计是否稳定收敛（非发散）
+- PLL 相位误差是否能跟上
+
+### 7.3 两台设备完整执行顺序
+
+```
+Step 0：TX dry-run，导出 truth JSON
+  ↓
+Step 1：TX 启动发射（终端 1）
+  ↓
+Step 2：TX 稳定后，启动 RX 采集（终端 2）
+  ↓
+Step 3：TX 发射期满自动停止（duration 覆盖 RX 窗口即可）
+  ↓
+Step 4：同步 MATLAB 文件到宿主机，运行 BER 分析
+```
+
+TX 发射时长建议比 RX 采集时长多 30 s（例如 RX 采集 30 s，TX 设 duration=60）。
+
+---
+
+## 九、当前默认命令
 
 ```bash
 # 干运行 + 导出 truth
