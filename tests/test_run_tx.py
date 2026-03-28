@@ -7,11 +7,15 @@
 """
 
 import io
+import json
+import tempfile
 import unittest
 from contextlib import redirect_stdout
+from pathlib import Path
 from unittest import mock
 
 from scripts import run_tx
+from gnss_tx.usrp import TxRuntimeConfig, build_tx_truth_payload
 
 
 class TestRunTxScript(unittest.TestCase):
@@ -79,6 +83,54 @@ class TestRunTxScript(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("prn_id=7", output)
         self.assertIn("生成方式=PRN7 C/A 扩频缓冲回放", output)
+
+    def test_dry_run_can_export_truth_json_with_effective_runtime_values(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            truth_path = Path(tmpdir) / "tx_truth.json"
+            argv = [
+                "run_tx.py",
+                "--config",
+                "configs/tx_b210_visible_spectrum.yaml",
+                "--dry-run",
+                "--export-truth-json",
+                str(truth_path),
+            ]
+
+            with mock.patch("sys.argv", argv):
+                with mock.patch.object(run_tx, "uhd_find_devices_output", return_value="serial: 193982"):
+                    buffer = io.StringIO()
+                    with redirect_stdout(buffer):
+                        exit_code = run_tx.main()
+
+            output = buffer.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(truth_path.exists())
+            payload = json.loads(truth_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["nav_bits_pattern_pm1"], [1, -1, 1, 1, -1, -1, 1, -1])
+            self.assertEqual(payload["nav_bits_pattern_01"], [1, 0, 1, 1, 0, 0, 1, 0])
+            self.assertEqual(payload["initial_nav_bit_index"], 0)
+            self.assertEqual(payload["initial_nav_epoch"], 0)
+            self.assertIn("Exported TX truth JSON", output)
+
+    def test_build_tx_truth_payload_preserves_non_default_initial_offsets(self) -> None:
+        payload = build_tx_truth_payload(
+            TxRuntimeConfig(
+                prn_id=7,
+                nav_pattern="1 0 1 1 0 0 1 0",
+                sample_rate=4.092e6,
+                samples_per_chip=4,
+                initial_code_phase=17,
+                initial_nav_epoch=5,
+                initial_nav_bit_index=3,
+            )
+        )
+
+        self.assertEqual(payload["prn_id"], 7)
+        self.assertEqual(payload["initial_code_phase"], 17)
+        self.assertEqual(payload["initial_nav_epoch"], 5)
+        self.assertEqual(payload["initial_nav_bit_index"], 3)
+        self.assertEqual(payload["epochs_per_bit"], 20)
+        self.assertEqual(payload["nav_bits_pattern_pm1"], [1, -1, 1, 1, -1, -1, 1, -1])
 
 
 if __name__ == "__main__":

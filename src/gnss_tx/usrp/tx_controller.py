@@ -13,6 +13,7 @@ GNSS TX 发射控制器模块
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 import subprocess
@@ -20,6 +21,7 @@ from typing import Any
 
 from gnss_tx.ca.prn_generator import SUPPORTED_PRN_IDS
 from gnss_tx.gr.top_block import GpsL1CaTxTopBlock, TxBlockConfig
+from gnss_tx.nav.nav_bits import CA_EPOCHS_PER_NAV_BIT, normalize_nav_bits
 from gnss_tx.usrp.b210_sink import create_b210_sink
 from gnss_tx.utils.io import load_yaml_file
 
@@ -414,6 +416,35 @@ def format_config_report(config: TxRuntimeConfig) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def build_tx_truth_payload(config: TxRuntimeConfig) -> dict[str, Any]:
+    """构造跨 TX/RX 共用的 BER truth 契约载荷。"""
+    nav_bits_pm1 = normalize_nav_bits(config.nav_pattern).astype(int).tolist()
+    nav_bits_01 = [1 if bit > 0 else 0 for bit in nav_bits_pm1]
+    return {
+        "nav_bits_pattern_pm1": nav_bits_pm1,
+        "nav_bits_pattern_01": nav_bits_01,
+        "initial_code_phase": int(config.initial_code_phase),
+        "initial_nav_epoch": int(config.initial_nav_epoch),
+        "initial_nav_bit_index": int(config.initial_nav_bit_index),
+        "samples_per_chip": int(config.samples_per_chip),
+        "sample_rate": float(config.sample_rate),
+        "epochs_per_bit": int(CA_EPOCHS_PER_NAV_BIT),
+        "prn_id": int(config.prn_id),
+    }
+
+
+def export_tx_truth_json(config: TxRuntimeConfig, output_path: str | Path) -> Path:
+    """将 TX truth 契约导出为 JSON 文件，供 RX BER 分析直接加载。"""
+    payload = build_tx_truth_payload(config)
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def format_observation_checklist(config: TxRuntimeConfig) -> str:
@@ -822,7 +853,9 @@ __all__ = [
     "TxRuntimeConfig",
     "apply_overrides",
     "build_tx_top_block",
+    "build_tx_truth_payload",
     "extract_uhd_device_field",
+    "export_tx_truth_json",
     "format_config_report",
     "format_lab_table_summary",
     "format_observation_checklist",

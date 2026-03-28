@@ -39,8 +39,18 @@ def create_b210_sink(config: TxBlockConfig):
     #    - otw_format="sc16" 表示发往设备链路时使用 complex int16 格式。
     #    - channels=[0] 仅启用第 0 路 TX 通道。
     # 3) 第三个参数是设备参数字符串，这里留空表示使用默认设置。
+    # 增大 USB 发送缓冲区以减少 underflow：
+    #   send_frame_size=4104  — 每帧样本数（8 的倍数且非 1024 的倍数）
+    #   num_send_frames=512   — 缓冲帧数
+    device_addr = ",".join(
+        part for part in [
+            config.usrp_addr,
+            "send_frame_size=4104",
+            "num_send_frames=512",
+        ] if part
+    )
     sink = uhd.usrp_sink(
-        ",".join(part for part in [config.usrp_addr] if part),
+        device_addr,
         uhd.stream_args(cpu_format="fc32", otw_format="sc16", channels=[0]),
         "",
     )

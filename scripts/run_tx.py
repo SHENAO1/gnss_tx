@@ -15,6 +15,7 @@ if str(SRC_PATH) not in sys.path:
 from gnss_tx.usrp import (
     apply_overrides,
     build_tx_top_block,
+    export_tx_truth_json,
     format_config_report,
     format_lab_table_summary,
     format_observation_checklist,
@@ -62,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Load and print the effective configuration without starting transmission.",
     )
+    parser.add_argument(
+        "--export-truth-json",
+        type=str,
+        default=None,
+        help="Export the effective TX truth contract to a JSON file for RX BER analysis.",
+    )
     return parser
 
 
@@ -101,6 +108,11 @@ def main() -> int:
     print(device_report if device_report else "(no output)")
     print("")
     print(format_lab_table_summary(config, device_report))
+
+    if args.export_truth_json:
+        truth_path = export_tx_truth_json(config, args.export_truth_json)
+        print("")
+        print(f"[INFO] Exported TX truth JSON: {truth_path}")
 
     if args.dry_run:
         print("")

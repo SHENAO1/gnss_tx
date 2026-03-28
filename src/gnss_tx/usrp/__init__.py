@@ -12,7 +12,9 @@ from gnss_tx.usrp.tx_controller import (
     TxRuntimeConfig,  # 发射运行配置数据类，集中管理 TX 参数并做校验。
     apply_overrides,  # 在基础配置上应用运行时覆盖项并保持字段联动一致。
     build_tx_top_block,  # 按配置构建完整 GNU Radio 发射 top block。
+    build_tx_truth_payload,  # 构造跨 TX/RX 共用的 BER truth 契约载荷。
     format_config_report,  # 生成运行配置文本报告（用于启动前核对）。
+    export_tx_truth_json,  # 导出 truth JSON，供 RX BER 分析直接加载。
     format_lab_table_summary,  # 生成实验表格填写摘要。
     format_observation_checklist,  # 生成频谱仪观测步骤清单与安全提示。
     format_uhd_tx_sample_rate_report,  # 输出请求/实际采样率及偏差报告。
@@ -31,7 +33,9 @@ __all__ = [
     "TxRuntimeConfig",
     "apply_overrides",
     "build_tx_top_block",
+    "build_tx_truth_payload",
     "create_b210_sink",
+    "export_tx_truth_json",
     "format_config_report",
     "format_lab_table_summary",
     "format_observation_checklist",
