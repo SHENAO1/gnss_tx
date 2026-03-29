@@ -47,6 +47,8 @@ def create_b210_sink(config: TxBlockConfig):
             config.usrp_addr,
             "send_frame_size=4104",
             "num_send_frames=512",
+            # 注意：B200 是 USB 设备，send_buff_size 映射到 USB DMA 内存（非 socket 缓冲），
+            # 过大的值会导致 LIBUSB_ERROR_NO_MEM crash。不要在此处添加 send_buff_size。
         ] if part
     )
     sink = uhd.usrp_sink(

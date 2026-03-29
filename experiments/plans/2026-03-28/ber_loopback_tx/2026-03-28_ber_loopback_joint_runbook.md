@@ -25,6 +25,15 @@
 先离线收敛，再联机复验；先 30 s，再 250 s，再 1 h。
 ```
 
+## 2026-03-29 收敛结论
+
+本轮联机复验已确认：
+
+- 当 `TX 无 underflow` 且 `RX 无 overflow` 时，`tracked_truth` 已在 `30 s` 样本上收敛到 `BER = 0.00e+00`（`0 / 1499 bit`）。
+- 同一轮结果中 `tracked_match = 100%`，误码位置图为空，说明当前闭环链路本身已经可用。
+- 因此当前主结论更新为：**`overflow/underflow` 是 BER 验收的首要闸门**，不是 TX truth 契约或 tracked BER 主链本身仍然不通。
+- 正式验收口径：只有在 `TX 无 underflow` 且 `RX 无 overflow` 的前提下，本轮 BER 才计入有效样本。
+
 ---
 
 ## 二、当前冻结基线
@@ -153,11 +162,48 @@ rsync -av matlab/ /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/
 建议重点确认这些文件已经是新版本：
 
 - `matlab/scripts/run_ber_loopback.m`
+- `matlab/scripts/run_capture_analysis.m`
 - `matlab/functions/recover_nav_bits.m`
 - `matlab/functions/track_nav_bits.m`
+- `matlab/functions/run_prn_acquisition.m`
+- `matlab/functions/run_multi_prn_survey.m`
+- `matlab/functions/load_gnss_rx_capture.m`
+- `matlab/functions/gnss_rx_resolve_accel_options.m`
 - `matlab/functions/plot_ber_loopback.m`
 - `matlab/functions/load_tx_truth_json.m`
 - `matlab/functions/build_fallback_tx_truth.m`
+
+如果只是本轮 BER / GPU 加速逻辑有更新，而不想整目录同步，也可用“最小同步清单”：
+
+```bash
+cd /home/shen/projects/GNSS_RX
+cp -v matlab/functions/gnss_rx_resolve_accel_options.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/functions/load_gnss_rx_capture.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/functions/recover_nav_bits.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/functions/run_prn_acquisition.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/functions/run_multi_prn_survey.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/functions/track_nav_bits.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/functions/
+cp -v matlab/scripts/run_ber_loopback.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/scripts/
+cp -v matlab/scripts/run_capture_analysis.m /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/scripts/
+cp -v matlab/README.md /mnt/hgfs/GongXiangDocument/GNSS_RX_matlab/
+```
+
+适用场景：
+
+- 只更新了少量 MATLAB 文件，希望减少共享目录同步时间
+- 只想确保 BER 主链与 GPU 加速相关文件已经覆盖到宿主机
+- 当前共享目录中还有其他手工文件，不希望被整目录镜像影响
+
+若采用“最小同步清单”，完成后仍建议在 MATLAB 中执行：
+
+```matlab
+which run_ber_loopback -all
+which run_prn_acquisition -all
+which recover_nav_bits -all
+which gnss_rx_resolve_accel_options -all
+```
+
+确认宿主机 MATLAB 确实已经加载到共享目录中的新文件。
 
 完成标志：
 
@@ -331,6 +377,11 @@ usrp_source :error: In the last 19249 ms, 1 overflows occurred.
 - Step 4 的验收样本默认要求 `RX 无 overflow`。
 - 若出现 overflow，优先重采，不建议把该次结果直接归因到 TX 比特错误或 tracking 参数错误。
 
+反向结论（2026-03-29 已验证）：
+
+- 若本轮同时满足 `TX 无 underflow` 与 `RX 无 overflow`，当前 `tracked_truth` 主链已验证可收敛到 `BER=0`。
+- 因此在“无 overflow/underflow 但 BER 仍高”的场景之外，不应再优先怀疑 truth JSON、pattern 偏移或 tracked BER 主链整体失效。
+
 优先缓解手段：
 
 - 优先把采集输出写到 VM 本地磁盘，再在采集后复制到共享目录；不要长期直接写 `/mnt/hgfs/...` 做正式 BER 验收。
@@ -445,11 +496,26 @@ env PYTHONPATH=src python3 scripts/record_rx.py \
 
 这种写法更长，但不会受到当前 shell 变量状态的影响，适合正式验收时减少操作失误。
 
+#### 关于进程优先级（250 s 及以上必读）
+
+B200 是 USB 设备，UHD 传输层的缓冲参数（`num_send_frames`、`num_recv_frames`、`recv_buff_size`）影响的是 USB DMA 内存分配，不是网络 socket 缓冲——**不能像 Ethernet USRP（X300/N200）那样随意调大**，过大的值会触发 `LIBUSB_ERROR_NO_MEM` 崩溃。
+
+因此对于 250 s 及以上长时测试，抑制 underflow/overflow 的推荐手段是**提升进程 CPU 调度优先级**，而不是调整缓冲区大小：
+
+```bash
+# 推荐：SCHED_FIFO 实时调度（priority 50），在 guest 内核层面几乎不被抢占
+# nice -n -15 只调整权重，hypervisor 仍可抢占整个 VM，效果有限
+# chrt 语法：sudo chrt -f <priority> <命令>，env 写在 chrt 后面传入 PYTHONPATH
+sudo chrt -f 50 env PYTHONPATH=src python3 <脚本> <参数>
+```
+
+两端都应使用 `sudo chrt -f 50`：TX 端保证 GNU Radio 调度线程能及时喂样到 USRP；RX 端保证 `Sc16CaptureSink` 写盘线程不被抢占。
+
 先在 TX 端启动：
 
 ```bash
 cd /home/shen/projects/gnss_tx
-env PYTHONPATH=src python3 scripts/run_tx.py \
+sudo chrt -f 50 env PYTHONPATH=src python3 scripts/run_tx.py \
     --config configs/tx_b210_cable_loopback.yaml \
     --tx-gain 40 \
     --amplitude 1.0 \
@@ -460,7 +526,18 @@ env PYTHONPATH=src python3 scripts/run_tx.py \
 
 ```bash
 cd /home/shen/projects/GNSS_RX
-env PYTHONPATH=src python3 scripts/record_rx.py \
+
+# 1. 定义本次采集路径变量（日期改为当天）
+CAPTURE_NAME=20260329_ber250s_localdisk_rawiq_sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur250p0s
+LOCAL_STEM=/home/shen/GNSS_RX_Data_local/2026/2026_03_29/$CAPTURE_NAME/$CAPTURE_NAME
+SHARE_DIR=/mnt/hgfs/GongXiangDocument/GNSS_RX_Data/2026/2026_03_29/$CAPTURE_NAME
+
+# 2. 创建本地目录并确认变量已正确展开（输出为空则停止，重新执行上面的定义块）
+mkdir -p "$(dirname "$LOCAL_STEM")"
+printf 'LOCAL_STEM=<%s>\n' "$LOCAL_STEM"
+
+# 3. 正式采集
+sudo chrt -f 50 env PYTHONPATH=src python3 scripts/record_rx.py \
     --config configs/rx_cable_loopback.yaml \
     --duration 250 \
     --capture-mode single \
@@ -517,7 +594,88 @@ mkdir: 无法创建目录 "": 没有那个文件或目录
 
 或让 `rsync` 误把目标解析成根目录 `/`。因此，复制前的变量自检不要省略。
 
-之后在宿主机 MATLAB 中显式指定共享目录副本：
+之后在宿主机 MATLAB 中分析共享目录副本。建议按下面顺序执行，避免路径、旧函数缓存和 GPU 兼容问题混在一起。
+
+**Step 5A：初始化 MATLAB 工作目录**
+
+```matlab
+cd('C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab')
+clear functions
+rehash
+```
+
+**Step 5B：若准备启用 GPU，加上兼容模式初始化**
+
+对于较新的 NVIDIA GPU，当前 MATLAB 可能需要先开启 CUDA forward compatibility，才能正常 `gpuDevice`：
+
+```matlab
+parallel.gpu.enableCUDAForwardCompatibility(true);
+gpuDevice
+```
+
+若要先做最小 GPU 烟雾测试，可执行：
+
+```matlab
+parallel.gpu.enableCUDAForwardCompatibility(true);
+g = gpuDevice;
+
+A = rand(1000, 'single');
+B = gpuArray(A);
+C = B .* 2;
+gather(C(1:5,1:5))
+```
+
+说明：
+
+- 该设置默认只对**当前 MATLAB 会话**生效，重启 MATLAB 后需重新执行。
+- 若希望每次启动自动开启，可写入 `startup.m`：
+
+```matlab
+parallel.gpu.enableCUDAForwardCompatibility(true);
+```
+
+- 若希望通过环境变量方式持久化，也可先设置：
+
+```matlab
+setenv("MW_CUDA_FORWARD_COMPATIBILITY","1")
+```
+
+然后重启 MATLAB。
+
+**Step 5C：确认 MATLAB 已加载到共享目录中的新脚本**
+
+```matlab
+which ber -all
+which run_ber_loopback -all
+which run_prn_acquisition -all
+which recover_nav_bits -all
+which gnss_rx_resolve_accel_options -all
+```
+
+期望结果：
+
+- `ber.m` 指向 `GNSS_RX_matlab` 根目录
+- `run_ber_loopback.m` 指向 `GNSS_RX_matlab\scripts`
+- `run_prn_acquisition.m`、`recover_nav_bits.m`、`gnss_rx_resolve_accel_options.m` 指向 `GNSS_RX_matlab\functions`
+
+**Step 5D：正式运行 GPU 加速版 BER 分析**
+
+先显式设置加速配置、truth JSON 路径和采集文件路径，再执行 `ber`。
+
+基础写法如下：
+
+```matlab
+ACCEL_OPTIONS = struct( ...
+    'backend', 'gpu', ...
+    'precision', 'single', ...
+    'batch_ms', 2000, ...
+    'use_parfor', false, ...
+    'device_index', []);
+
+TX_TRUTH_PATH = 'C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab\tx_truth.json';
+```
+
+然后显式指定这次 `250 s` 的共享目录采集路径，再执行 `ber`：
 
 ```matlab
 CAPTURE_PATH = ['C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_Data\2026\' ...
@@ -526,6 +684,84 @@ CAPTURE_PATH = ['C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_Data\2026\' 
     'sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur250p0s'];
 ber
 ```
+
+若实验日期已切换到新一天，应同步更新 `CAPTURE_PATH` 中的日期目录与文件名。例如 `2026-03-29` 可写为：
+
+```matlab
+ACCEL_OPTIONS = struct( ...
+    'backend', 'gpu', ...
+    'precision', 'single', ...
+    'batch_ms', 2000, ...
+    'use_parfor', false, ...
+    'device_index', []);
+TX_TRUTH_PATH = 'C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab\tx_truth.json';
+CAPTURE_PATH = ['C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_Data\2026\' ...
+    '2026_03_29\20260329_ber250s_localdisk_rawiq_sc16_zeroif_prn1_spread_' ...
+    'sr4092000_cf100000000_dur250p0s\20260329_ber250s_localdisk_rawiq_' ...
+    'sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur250p0s'];
+ber
+```
+
+若 GPU 路径初始化失败，但仍想先把本轮结果跑出来，推荐改为自动回退模式：
+
+```matlab
+ACCEL_OPTIONS = struct('backend', 'auto', 'precision', 'single');
+TX_TRUTH_PATH = 'C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab\tx_truth.json';
+CAPTURE_PATH = ['C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_Data\2026\' ...
+    '2026_03_29\20260329_ber250s_localdisk_rawiq_sc16_zeroif_prn1_spread_' ...
+    'sr4092000_cf100000000_dur250p0s\20260329_ber250s_localdisk_rawiq_' ...
+    'sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur250p0s'];
+ber
+```
+
+若只想强制走 CPU，也可显式指定：
+
+```matlab
+ACCEL_OPTIONS = struct('backend', 'cpu', 'precision', 'double');
+TX_TRUTH_PATH = 'C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab\tx_truth.json';
+CAPTURE_PATH = ['C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_Data\2026\' ...
+    '2026_03_29\20260329_ber250s_localdisk_rawiq_sc16_zeroif_prn1_spread_' ...
+    'sr4092000_cf100000000_dur250p0s\20260329_ber250s_localdisk_rawiq_' ...
+    'sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur250p0s'];
+ber
+```
+
+**Step 5E：若 MATLAB 仍提示找不到入口函数**
+
+先执行：
+
+```matlab
+cd('C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab')
+clear functions
+rehash
+which ber -all
+```
+
+**Step 5F：若 GPU 仍不可用，记录这些诊断信息**
+
+```matlab
+version -release
+gpuDeviceCount
+parallel.gpu.enableCUDAForwardCompatibility
+canUseGPU
+```
+
+这些输出可用于判断当前是 MATLAB 版本、驱动、还是工具箱兼容性问题。
+
+运行后建议优先确认以下输出：
+
+- `加速配置：requested=... resolved=...`
+- 若启用了 GPU：`GPU 设备：[...] ...`
+- `本次分析文件：...` 是否已经指向刚复制到共享目录的 `250 s` 文件
+- `TX truth：JSON 模式`
+- `Step 2 后端：...`
+- `Step 3 后端：...`
+- `Step 4 后端：cpu（tracking 主循环在 v1 保持 CPU）`
+- `=== Step 4: tracked BER 主链 ===`
+- `tracked BER`
+- `BER 统计结果`
+- `Step 2 用时 / Step 3 用时 / Step 4 用时`
+- 是否出现明显的 `reacq_events`、后段 BER 抬升或 tracking 尖峰
 
 操作提醒：
 
