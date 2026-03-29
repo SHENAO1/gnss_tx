@@ -1,123 +1,72 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net" modified="2026-03-26" version="21.0.0">
-  <diagram id="utils-module" name="utils/ — 工具模块">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1"
-                  tooltips="1" connect="1" arrows="1" fold="1" page="1"
-                  pageScale="1" pageWidth="900" pageHeight="580" math="0" shadow="0">
+<mxfile host="app.diagrams.net" modified="2026-03-29T00:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="utils-module" name="utils/ — 已实现 YAML IO 与未来占位">
+    <mxGraphModel dx="1200" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="620" math="0" shadow="0" adaptiveColors="auto">
       <root>
-        <mxCell id="0"/><mxCell id="1" parent="0"/>
-
-        <!-- Title -->
-        <mxCell id="title" value="utils/ 模块 — 工具函数（1 已实现，2 占位符）"
-                style="text;html=1;fontStyle=1;fontSize=14;align=center;"
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="utils/ 模块 — 当前只有 `load_yaml_file()` 是 TX 主链已实现依赖"
+                style="text;html=1;fontStyle=1;fontSize=15;align=center;"
                 vertex="1" parent="1">
-          <mxGeometry x="50" y="10" width="800" height="30" as="geometry"/>
+          <mxGeometry x="30" y="10" width="920" height="30" as="geometry"/>
         </mxCell>
 
-        <!-- ===== COLUMN 1: io.py (implemented) ===== -->
-        <mxCell id="io-bg" value="io.py  ✅ 已实现"
-                style="swimlane;startSize=28;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;"
+        <mxCell id="lane_impl" value="当前已实现"
+                style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=32;container=1;collapsible=0;recursiveResize=0;strokeColor=#82B366;fillColor=#D5E8D4;fontStyle=1;pointerEvents=0;"
                 vertex="1" parent="1">
-          <mxGeometry x="20" y="55" width="260" height="450" as="geometry"/>
+          <mxGeometry x="20" y="60" width="420" height="500" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane_future" value="未来占位（当前 TX 主链未使用）"
+                style="swimlane;html=1;whiteSpace=wrap;rounded=1;horizontal=1;startSize=32;container=1;collapsible=0;recursiveResize=0;strokeColor=#999999;fillColor=#F5F5F5;fontStyle=3;dashed=1;pointerEvents=0;"
+                vertex="1" parent="1">
+          <mxGeometry x="470" y="60" width="480" height="500" as="geometry"/>
         </mxCell>
 
-        <mxCell id="io-in" value="输入: path: str | Path"
-                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="35" y="100" width="230" height="40" as="geometry"/>
+        <mxCell id="yaml_in" value="输入&#xa;`path: str | Path`"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;"
+                vertex="1" parent="lane_impl">
+          <mxGeometry x="95" y="55" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="yaml_impl" value="实现逻辑&#xa;`yaml.safe_load(read_text(...))`&#xa;空文件 → `{}`&#xa;顶层不是 mapping → `ValueError`"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;"
+                vertex="1" parent="lane_impl">
+          <mxGeometry x="75" y="150" width="260" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="yaml_func" value="核心实现&#xa;`load_yaml_file(path)`&#xa;文件: `io.py`"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#82B366;strokeColor=#4D7A3A;fontColor=#ffffff;fontStyle=1;"
+                vertex="1" parent="lane_impl">
+          <mxGeometry x="95" y="275" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="yaml_out" value="输出产物&#xa;`dict[str, Any]`&#xa;供 `usrp/tx_controller.py` 装载 TX 配置"
+                style="shape=document;whiteSpace=wrap;html=1;fillColor=#FCE5CD;strokeColor=#D79B00;fontStyle=1;"
+                vertex="1" parent="lane_impl">
+          <mxGeometry x="95" y="380" width="220" height="75" as="geometry"/>
         </mxCell>
 
-        <mxCell id="io-impl" value="yaml.safe_load(f)&#xa;验证顶层类型为 dict&#xa;空文件返回 {}"
-                style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="35" y="175" width="230" height="65" as="geometry"/>
+        <mxCell id="log_future" value="`logging.py`&#xa;当前空文件&#xa;未来可承接统一日志封装"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontColor=#666666;dashed=1;"
+                vertex="1" parent="lane_future">
+          <mxGeometry x="45" y="70" width="170" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="time_future" value="`timebase.py`&#xa;当前空文件&#xa;未来可承接 GPS 时间基 / timed start"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontColor=#666666;dashed=1;"
+                vertex="1" parent="lane_future">
+          <mxGeometry x="265" y="70" width="170" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="future_note" value="弱化原则&#xa;这两个文件本轮只保留为 roadmap 占位。&#xa;它们不参与当前 `run_tx.py` → `tx_controller.py` → `gr/top_block.py` 主链。"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
+                vertex="1" parent="lane_future">
+          <mxGeometry x="105" y="200" width="270" height="95" as="geometry"/>
         </mxCell>
 
-        <mxCell id="io-func" value="load_yaml_file(path)&#xa;io.py"
-                style="rounded=1;whiteSpace=wrap;fillColor=#82b366;strokeColor=#4d7a3a;fontColor=#ffffff;fontStyle=1;fontSize=11;"
-                vertex="1" parent="1">
-          <mxGeometry x="35" y="275" width="230" height="50" as="geometry"/>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="yaml_in" target="yaml_impl">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-
-        <mxCell id="io-out" value="输出: dict[str, Any]&#xa;YAML 顶层字典"
-                style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="35" y="360" width="230" height="45" as="geometry"/>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="yaml_impl" target="yaml_func">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-
-        <mxCell id="io-users" value="被调用方: usrp/tx_controller.py&#xa;GNSS_RX/src/gnss_rx/runtime.py"
-                style="text;html=1;fontSize=9;fontColor=#666666;align=center;"
-                vertex="1" parent="1">
-          <mxGeometry x="35" y="415" width="230" height="30" as="geometry"/>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" edge="1" parent="1" source="yaml_func" target="yaml_out">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-
-        <!-- ===== COLUMN 2: logging.py (placeholder) ===== -->
-        <mxCell id="log-bg" value="logging.py  ❌ 未实现占位符"
-                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=3;fontSize=12;dashed=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="320" y="55" width="260" height="450" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="log-plan" value="计划实现:&#xa;封装 Python logging 标准库&#xa;支持彩色控制台输出 + 文件 handler"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="335" y="100" width="230" height="70" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="log-func" value="get_logger(name: str)&#xa;→ logging.Logger&#xa;logging.py [未实现]"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontStyle=1;fontSize=11;"
-                vertex="1" parent="1">
-          <mxGeometry x="335" y="210" width="230" height="60" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="log-out" value="输出: logging.Logger 实例&#xa;控制台彩色输出 + 文件持久化"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#888888;dashed=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="335" y="310" width="230" height="50" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="log-users" value="计划被: run_tx.py, record_rx.py&#xa;所有模块统一使用"
-                style="text;html=1;fontSize=9;fontColor=#999999;align=center;"
-                vertex="1" parent="1">
-          <mxGeometry x="335" y="375" width="230" height="30" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== COLUMN 3: timebase.py (placeholder) ===== -->
-        <mxCell id="tb-bg" value="timebase.py  ❌ 未实现占位符"
-                style="swimlane;startSize=28;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=3;fontSize=12;dashed=1;"
-                vertex="1" parent="1">
-          <mxGeometry x="620" y="55" width="260" height="450" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="tb-f1" value="gps_week_from_datetime(dt: datetime)&#xa;→ int&#xa;GPS 周数（从 1980-01-06 起算）"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="635" y="100" width="230" height="65" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="tb-f2" value="gps_tow_from_datetime(dt: datetime)&#xa;→ float  [秒, 0~604800)&#xa;GPS 周内秒 (TOW)"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="635" y="195" width="230" height="65" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="tb-f3" value="set_usrp_timed_start(sink, delay_s: float)&#xa;→ None&#xa;UHD timed command: 精确对齐两台 USRP 启动时间"
-                style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#666666;dashed=1;fontSize=10;"
-                vertex="1" parent="1">
-          <mxGeometry x="635" y="290" width="230" height="70" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="tb-users" value="计划被: nav/subframe_builder.py (TOW)&#xa;gr/top_block.py (双 USRP 同步)"
-                style="text;html=1;fontSize=9;fontColor=#999999;align=center;"
-                vertex="1" parent="1">
-          <mxGeometry x="635" y="380" width="230" height="30" as="geometry"/>
-        </mxCell>
-
-        <!-- ===== EDGES ===== -->
-        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-in" target="io-impl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-impl" target="io-func" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="io-func" target="io-out" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
       </root>
     </mxGraphModel>
   </diagram>
