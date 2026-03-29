@@ -423,14 +423,23 @@ def build_tx_truth_payload(config: TxRuntimeConfig) -> dict[str, Any]:
     nav_bits_pm1 = normalize_nav_bits(config.nav_pattern).astype(int).tolist()
     nav_bits_01 = [1 if bit > 0 else 0 for bit in nav_bits_pm1]
     return {
+        # 导航比特真值（+1/-1 表示），供相关器/判决直接使用。
         "nav_bits_pattern_pm1": nav_bits_pm1,
+        # 与上面等价的 0/1 版本，便于做 BER 统计与可视化。
         "nav_bits_pattern_01": nav_bits_01,
+        # 发射起点的 C/A 码相位（单位：chip）。
         "initial_code_phase": int(config.initial_code_phase),
+        # 发射起点对应的导航 epoch（20 个 C/A epoch = 1 bit）。
         "initial_nav_epoch": int(config.initial_nav_epoch),
+        # 发射起点在 nav_pattern 中落到的比特索引。
         "initial_nav_bit_index": int(config.initial_nav_bit_index),
+        # 码片过采样倍数（每个 chip 的采样点数）。
         "samples_per_chip": int(config.samples_per_chip),
+        # 实际发射采样率（Hz）。
         "sample_rate": float(config.sample_rate),
+        # 每个导航比特包含多少个 C/A epoch（GPS L1 C/A 固定为 20）。
         "epochs_per_bit": int(CA_EPOCHS_PER_NAV_BIT),
+        # 当前 truth 对应的 PRN 编号。
         "prn_id": int(config.prn_id),
     }
 
