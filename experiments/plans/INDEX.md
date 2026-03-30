@@ -10,6 +10,7 @@
 |------|---------|------|------|
 | [2026-03-26/tx_rx_improvement/2026-03-26_tx_rx_improvement_plan.md](2026-03-26/tx_rx_improvement/2026-03-26_tx_rx_improvement_plan.md) | 2026-03-26 | TX/RX 综合改进路线图（跨项目） | 持续更新 |
 | [2026-03-28/ber_loopback_tx/2026-03-28_ber_loopback_tx_plan.md](2026-03-28/ber_loopback_tx/2026-03-28_ber_loopback_tx_plan.md) | 2026-03-27 | 当前 BER 发端主计划：稳定发射基线 + truth JSON 导出 + 长时实验配合 | `[~]` 当前执行主线 |
+| [2026-03-29/baremetal_capture/2026-03-29_baremetal_capture_runbook.md](2026-03-29/baremetal_capture/2026-03-29_baremetal_capture_runbook.md) | 2026-03-29 | 裸机 Ubuntu 笔记本线缆回环采集手册：UHD 配置 → 联机采集 → 移动硬盘转移 → MATLAB 导入 | `[~]` 待执行 |
 
 ---
 
@@ -34,6 +35,7 @@
 
 ## 更新日志
 
+- **2026-03-29**：新增裸机 Ubuntu 采集手册，应对 VMware underflow/overflow 根因，配套新建 `GNSS_RX/configs/rx_baremetal.yaml`
 - **2026-03-28**：BER 发端文档已更新为 truth JSON 导出 + 稳定发射基线 + 长时实验配合的当前代码状态
 - **2026-03-27**：新增 BER 闭环验证计划与发射功率测试文档，并统一收纳到 `plans/2026-03-27/<topic>/`
 - **2026-03-26**：TX/RX 综合改进路线图收纳到 `plans/2026-03-26/tx_rx_improvement/`
