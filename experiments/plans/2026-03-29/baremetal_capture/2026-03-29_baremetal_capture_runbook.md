@@ -429,6 +429,45 @@ result = run_capture_analysis( ...
 - 输出包含 `analysis_summary.json`、`analysis_summary.mat` 和 PNG 图
 - 最终验收目标仍为 `BER = 0.00e+00`、`tracked_match = 100%`
 
+若希望将移动硬盘直接连接到 Windows 主力机并原地分析，也可以使用“移动硬盘直读”方式：
+
+- 适用场景：临时验证结果、避免先复制 4.6 GB 以上的大文件到本地 SSD
+- 注意事项：分析过程中不要拔出移动硬盘；若盘符变化（例如不再是 `F:`），需同步修改路径
+- 性能建议：可直接运行，但稳定性和速度通常仍不如先复制到本地 SSD
+
+按本机当前实测挂载，移动硬盘数据根目录可写为：
+
+```text
+F:\GNSS_RX_Data_baremetal
+```
+
+当前这次裸机采集的 stem 路径可写为：
+
+```text
+F:\GNSS_RX_Data_baremetal\2026\2026_03_30\20260330_025519_rawiq_sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur300p0s\20260330_025519_rawiq_sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur300p0s
+```
+
+若希望 MATLAB 默认从移动硬盘中自动分析“最新采集”，可将 `gnss_rx_user_paths.m` 改为：
+
+```matlab
+GNSS_RX_DATA_DIR = 'F:\GNSS_RX_Data_baremetal';
+```
+
+然后在 MATLAB 中运行：
+
+```matlab
+cd('C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab')
+result = run_capture_analysis();
+```
+
+若只想强制分析本次移动硬盘中的裸机采集，可直接传入显式 stem 路径：
+
+```matlab
+cd('C:\VMwareVirtualMachines\GongXiangDocument\GNSS_RX_matlab')
+result = run_capture_analysis( ...
+  'F:\GNSS_RX_Data_baremetal\2026\2026_03_30\20260330_025519_rawiq_sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur300p0s\20260330_025519_rawiq_sc16_zeroif_prn1_spread_sr4092000_cf100000000_dur300p0s');
+```
+
 ---
 
 ## 验收清单
