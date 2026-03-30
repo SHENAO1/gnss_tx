@@ -27,6 +27,9 @@
 cd ~/projects/gnss_tx
 source .venv/bin/activate
 
+# .venv 需通过 `bash env/ubuntu/setup.sh` 或
+# `python3 -m venv --system-site-packages .venv` 创建
+
 # 检查 Python 环境和项目结构
 PYTHONPATH=src python3 scripts/quick_check.py
 

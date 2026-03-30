@@ -93,8 +93,8 @@ sudo uhd_images_downloader   # 首次使用或固件更新后必须执行
 
 ```bash
 cd ~/projects/gnss_tx
-bash env/ubuntu/setup.sh     # 推荐：使用安装脚本
-# 或手动：python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+bash env/ubuntu/setup.sh     # 推荐：使用安装脚本（会创建能看到 GNU Radio/UHD 的 .venv）
+# 或手动：python3 -m venv --system-site-packages .venv && source .venv/bin/activate && pip install -r env/ubuntu/requirements.txt && pip install -e .
 ```
 
 激活虚拟环境（每次新终端）：
@@ -107,6 +107,7 @@ source ~/projects/gnss_tx/.venv/bin/activate
 
 ```bash
 cd ~/projects/gnss_tx
+python3 -c "from gnuradio import uhd; print(uhd.__file__)"
 PYTHONPATH=src python3 scripts/quick_check.py
 uhd_find_devices
 ```
