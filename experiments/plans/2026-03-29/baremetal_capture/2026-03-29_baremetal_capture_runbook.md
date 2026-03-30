@@ -68,7 +68,7 @@ uhd_find_devices
 mkdir -p ~/projects
 cd ~/projects
 git clone --branch feat/prn-subset-tx https://github.com/SHENAO1/gnss_tx.git gnss_tx
-git clone https://github.com/SHENAO1/GNSS_RX.git GNSS_RX
+git clone --branch feat/multi-prn-rx https://github.com/SHENAO1/GNSS_RX.git GNSS_RX
 ```
 
 ### 方式 B：移动硬盘拷贝（无网环境）
