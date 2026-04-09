@@ -4,6 +4,8 @@
 
 ## 文档索引
 
+- `introduction_guide.md`
+  向他人介绍发射端工程的讲解导引，包含系统总览和 TX 信号生成原理两个部分，配合 Draw.io 图表使用。
 - `gnss_tx_architecture_analysis.md`
   工程架构完整分析报告，含模块树、已实现能力边界和工程定位说明。
 - `next_step_review.md`
