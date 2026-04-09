@@ -1,6 +1,6 @@
 # USRP B200 / B210 中文参数整理
 
-原始手册：`/home/shen/projects/gnss_tx/DataSheet/B200_B210/b200-b210_spec_sheet.pdf`  
+原始手册：`../B200_B210/b200-b210_spec_sheet.pdf`  
 文档类型：2 页规格页（Spec Sheet）
 
 ## 1. 平台定位

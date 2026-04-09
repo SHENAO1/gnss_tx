@@ -2,7 +2,7 @@
 
 > 创建时间：2026-03-26 （初始化）
 > 维护规则：每天实验结束后更新"进行中"和"已完成"状态，新计划条目追加到对应优先级分区
-> 配套文档：[GNSS_RX 版本](/home/shen/projects/GNSS_RX/experiments/plans/2026-03-26/tx_rx_improvement/2026-03-26_tx_rx_improvement_plan.md)
+> 配套文档：`GNSS_RX/experiments/plans/2026-03-26/tx_rx_improvement/2026-03-26_tx_rx_improvement_plan.md`
 
 ---
 
@@ -47,12 +47,12 @@
 - [ ] **MATLAB 捕获热图可视化**
   - 问题：捕获只输出文字次峰比，无法直观观察旁瓣分布和多星干扰情况
   - 方案：生成代码延迟（横轴，chip）vs Doppler（纵轴，Hz）的 2D 相关能量热图，每颗 PRN 一张子图
-  - 涉及文件：[../GNSS_RX/matlab/run_capture_analysis.m](/home/shen/projects/GNSS_RX/matlab/run_capture_analysis.m)
+  - 涉及文件：[../GNSS_RX/matlab/run_capture_analysis.m](../../../../GNSS_RX/matlab/run_capture_analysis.m)
 
 - [ ] **CN0 估计**
   - 问题：次峰比依赖积分时间，不同实验结果横向对比困难
   - 方案：实现 Narrow-Wideband Power 法估计 CN0（dB-Hz），与真实 GPS 接收机指标对比更直观
-  - 涉及文件：[../GNSS_RX/matlab/](/home/shen/projects/GNSS_RX/matlab/)
+  - 涉及文件：[../GNSS_RX/matlab/](../../../../GNSS_RX/matlab/)
 
 ---
 

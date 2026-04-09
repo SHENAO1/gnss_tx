@@ -403,7 +403,7 @@ def write_draft(output_path: Path, config_path: Path) -> None:
         "## 基本信息",
         f"- 实验日期：`{date.today().isoformat()}`",
         "- 操作者：",
-        f"- 配置文件：[`{config_path}`](/home/shen/projects/gnss_tx/{config_path})",
+        f"- 配置文件：`{config_path}`",
         "- 实验目标：在可见谱配置基础上，寻找最低可见且稳定的发射参数组合，并同步填写实验表格关键字段",
         "",
         "## 固定发射条件",

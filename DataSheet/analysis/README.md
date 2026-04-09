@@ -5,9 +5,9 @@
 ## 文档索引
 
 - [AD9361 中文参数整理](./ad9361_summary_zh.md)
-  - 原始手册：`/home/shen/projects/gnss_tx/DataSheet/AD9361/ad9361.pdf`
+  - 原始手册：`../AD9361/ad9361.pdf`
 - [USRP B200/B210 中文参数整理](./usrp_b200_b210_summary_zh.md)
-  - 原始手册：`/home/shen/projects/gnss_tx/DataSheet/B200_B210/b200-b210_spec_sheet.pdf`
+  - 原始手册：`../B200_B210/b200-b210_spec_sheet.pdf`
 
 ## 说明
 

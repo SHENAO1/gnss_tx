@@ -1,8 +1,11 @@
 # 发射端实验计划：闭环 BER 验证（发端视角）
 
+> **注意**：本文件中代码块内的绝对路径（`/home/shen/...`）均为原始记录机器的路径。
+> 在其他机器上复现时，请将 `/home/shen` 替换为实际 `$HOME`。
+>
 > 创建时间：2026-03-27
 > 2026-03-28 更新：已按 `tx_power_test` 结果修正执行基线，并补入 truth JSON 导出流程
-> 对应接收端计划：`/home/shen/projects/GNSS_RX/experiments/plans/2026-03-28/ber_loopback_rx/2026-03-28_ber_loopback_rx_plan.md`
+> 对应接收端计划：`GNSS_RX/experiments/plans/2026-03-28/ber_loopback_rx/2026-03-28_ber_loopback_rx_plan.md`
 > 状态：`[~]` truth 导出与发射基线已实现，待配合 RX tracked BER 做 30 s / 250 s / 1 h 验证
 > 里程碑目标：Milestone 1 — 射频线直连闭环 BER 验证
 

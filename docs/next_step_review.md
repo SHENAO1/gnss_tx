@@ -195,3 +195,10 @@ Companion 侧当前默认值定为：
 ## 阶段判断
 
 当前工程最适合继续收敛为“单星可选 PRN 扩频发送实验平台”。在这个阶段，清晰的主线、稳定的 Ubuntu 运行入口、可追溯的实验记录和一致的配置语义，比继续扩充完整 GNSS 功能更重要。
+
+
+## 相关实验计划
+
+- 综合改进路线图：[`experiments/plans/2026-03-26/tx_rx_improvement/`](../experiments/plans/2026-03-26/tx_rx_improvement/)
+- BER 闭环验证计划索引：[`experiments/plans/INDEX.md`](../experiments/plans/INDEX.md)
+- 所有历史实验记录：[`experiments/records/`](../experiments/records/)

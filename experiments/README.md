@@ -1,6 +1,15 @@
 # experiments 目录说明
 
-本目录用于记录 `GPS L1 C/A` 发射端实验，并统一按“类别 / 日期 / 主题”归档，避免实验文档继续散落在根目录。
+本目录用于记录 `GPS L1 C/A` 发射端实验，并统一按”类别 / 日期 / 主题”归档，避免实验文档继续散落在根目录。
+
+## 技术背景
+
+实验前建议先阅读以下技术文档：
+
+- 工程架构与模块说明：[`docs/gnss_tx_architecture_analysis.md`](../docs/gnss_tx_architecture_analysis.md)
+- 当前工程状态与下一步任务：[`docs/next_step_review.md`](../docs/next_step_review.md)
+- 频谱仪配置与排障：[`docs/spectrum_analyzer_observation.md`](../docs/spectrum_analyzer_observation.md)
+- 架构图总览：[`docs/diagrams/`](../docs/diagrams/)
 
 ## 目录结构
 

@@ -2,7 +2,7 @@
 
 > 创建时间：2026-03-27
 > 备份说明：本文件保留 2026-03-27 未完成版本的原始语境，供 2026-03-28 重写版对照使用
-> 对应接收端计划：`/home/shen/projects/GNSS_RX/experiments/plans/2026-03-27/ber_loopback_rx/2026-03-27_ber_loopback_rx_plan.md`
+> 对应接收端计划：`GNSS_RX/experiments/plans/2026-03-27/ber_loopback_rx/2026-03-27_ber_loopback_rx_plan.md`
 > 状态：`[~]` 历史备份；当前执行以 2026-03-28 truth 导出版为准
 > 里程碑目标：Milestone 1 — 射频线直连闭环 BER 验证
 

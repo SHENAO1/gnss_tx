@@ -1,5 +1,8 @@
 # 裸机 Ubuntu 线缆回环采集手册
 
+> **注意**：本文件中代码块内的绝对路径（`/home/shen/...`）均为原始记录机器的路径。
+> 在其他机器上复现时，请将 `/home/shen` 替换为实际 `$HOME`，并按实际数据目录调整。
+>
 > 创建时间：2026-03-29
 > 目的：规避 VMware vCPU 抢占导致的 underflow/overflow，在裸机上获取有效 BER 基线
 > 关联根因分析：[2026-03-29_underflow_overflow_root_cause_analysis.md](../ber_loopback_tx/2026-03-29_underflow_overflow_root_cause_analysis.md)
