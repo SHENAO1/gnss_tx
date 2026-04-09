@@ -43,13 +43,19 @@ SUPPORTED_PRN_IDS = tuple(sorted(_PRN_G2_TAPS))
 
 
 def generate_ca_code(prn_id: int) -> np.ndarray:
-    """
-    Generate one GPS L1 C/A epoch as int8 chips in +/-1 representation.
+    """生成 GPS L1 C/A 码的一个完整周期（1023 chip，1 ms）。
 
-    物理意义：
-    - 输出的是一个卫星 PRN 的 1 ms 扩频码序列。
-    - 每个元素代表一个 chip，取值为 +/-1，后续会与导航 bit 相乘，
-      再被重复采样为 baseband sample。
+    输出为双极性 int8 数组，每个元素取值 +1 或 -1，代表一个 chip。
+    后续流程中会与导航 bit 相乘，再被重复采样扩展为 baseband sample。
+
+    Args:
+        prn_id: 卫星 PRN 编号，取值范围 1–32。
+
+    Returns:
+        shape=(1023,) 的 np.int8 数组，元素为 +1 或 -1。
+
+    Raises:
+        ValueError: prn_id 不在支持范围内时抛出。
     """
     if prn_id not in _PRN_G2_TAPS:
         raise ValueError(

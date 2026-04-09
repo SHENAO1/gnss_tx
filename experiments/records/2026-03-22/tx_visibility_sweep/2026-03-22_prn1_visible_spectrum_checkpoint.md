@@ -6,7 +6,7 @@
 
 ## 发射配置
 
-- 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
+- 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](../configs/tx_b210_visible_spectrum.yaml)
 - `center_freq = 100 MHz`
 - `sample_rate = 4.092 Msps`
 - `samples_per_chip = 4`

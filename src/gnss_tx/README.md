@@ -5,7 +5,7 @@
 
 ## 包结构
 
-```
+```text
 src/gnss_tx/
 ├── ca/                  # C/A 码生成
 ├── nav/                 # 导航 bit 处理
@@ -23,6 +23,7 @@ src/gnss_tx/
 - `resampler.py`：码重采样辅助
 
 核心接口：
+
 ```python
 from gnss_tx.ca.prn_generator import generate_ca_code
 code = generate_ca_code(prn_id=1)  # int8 数组，长 1023
@@ -31,9 +32,10 @@ code = generate_ca_code(prn_id=1)  # int8 数组，长 1023
 ### `nav/` — 导航 bit 处理
 
 - `nav_bits.py`：50 bps 循环导航 bit 源（`CyclicNavBitSource`）与归一化工具（`normalize_nav_bits`）
-- `subframe_builder.py`：占位文件，待实现真实 GPS NAV 子帧
+- `subframe_builder.py`：**[占位]** 待实现真实 GPS NAV 子帧
 
 核心接口：
+
 ```python
 from gnss_tx.nav.nav_bits import CyclicNavBitSource, normalize_nav_bits
 src = CyclicNavBitSource([1, 0, 1, 1, 0])
@@ -48,10 +50,11 @@ bit = src.bit_at(index=0)  # 返回 +1 或 -1
 - `modulator.py`：chip → complex baseband 映射
 
 核心接口：
+
 ```python
 from gnss_tx.signal.spreader import GpsL1CaBpskGenerator
 gen = GpsL1CaBpskGenerator(prn_id=1, samples_per_chip=4)
-samples = gen.generate_samples(count=4092)  # complex64
+samples = gen.generate_samples(num_samples=4092)  # complex64
 
 from gnss_tx.signal.multi_sat_combiner import build_multi_sat_replay_samples
 buf = build_multi_sat_replay_samples(samples_per_chip=4)  # 32颗PRN叠加
@@ -61,12 +64,21 @@ buf = build_multi_sat_replay_samples(samples_per_chip=4)  # 32颗PRN叠加
 
 - `top_block.py`：`GpsL1CaTxTopBlock`，组装 GNU Radio 流图（`vector_source_c` 缓冲回放 + `multiply_const_cc` 幅度缩放 + `uhd.usrp_sink` 发射），可选 QT 时域/频域预览
 
+核心接口：
+
+```python
+from gnss_tx.gr.top_block import GpsL1CaTxTopBlock, TxBlockConfig
+block = GpsL1CaTxTopBlock(config=TxBlockConfig(...))
+block.run()  # 阻塞至发射结束
+```
+
 ### `usrp/` — USRP 控制与运行时配置
 
 - `tx_controller.py`：`TxRuntimeConfig`（不可变 dataclass），负责 YAML 加载、参数校验、采样率联动计算（`sample_rate = 1.023 MHz × samples_per_chip`）、CLI 覆盖、实验报告生成
 - `b210_sink.py`：创建 UHD USRP sink，读回实际采样率
 
 核心接口：
+
 ```python
 from gnss_tx.usrp.tx_controller import TxRuntimeConfig, load_tx_runtime_config
 config = load_tx_runtime_config("configs/tx_b210_visible_spectrum.yaml")
@@ -75,12 +87,19 @@ config = load_tx_runtime_config("configs/tx_b210_visible_spectrum.yaml")
 ### `utils/` — 基础工具
 
 - `io.py`：YAML 文件加载（`load_yaml_file`）
-- `timebase.py`：占位文件，待实现时基管理
-- `logging.py`：占位文件，待实现日志模块
+- `timebase.py`：**[占位]** 待实现时基管理
+- `logging.py`：**[占位]** 待实现日志模块
+
+核心接口：
+
+```python
+from gnss_tx.utils.io import load_yaml_file
+cfg = load_yaml_file("configs/tx_b210.yaml")
+```
 
 ## 如何间接运行这些模块
 
-通过 CLI 入口调用整套包：
+详见根目录 [README.md](../../README.md) 的"快速开始"章节。常用命令汇总：
 
 ```bash
 cd ~/projects/gnss_tx

@@ -1,0 +1,12 @@
+# [Placeholder] Lab single-tone experiment configuration — not yet implemented.
+# See configs/README.md for available working configurations.
+#
+# Intended future role:
+#   A dedicated single-tone calibration config with documented attenuation
+#   levels and frequency offsets for systematic hardware bring-up.
+#
+# Use instead:
+#   Run with --signal-mode tone --tone-offset-hz <Hz> on the CLI, e.g.:
+#   PYTHONPATH=src python3 scripts/run_tx.py \
+#       --config configs/tx_b210.yaml \
+#       --signal-mode tone --tone-offset-hz 500000 --tx-gain 10

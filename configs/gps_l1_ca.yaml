@@ -1,0 +1,11 @@
+# [Placeholder] GPS L1 C/A signal-level configuration — not yet implemented.
+# See configs/README.md for available working configurations.
+#
+# Intended future role:
+#   A signal-focused config that separates RF hardware parameters from
+#   signal generation parameters, allowing the same signal definition to
+#   be replayed on different hardware backends.
+#
+# Use instead:
+#   configs/tx_b210_visible_spectrum.yaml  — recommended single-PRN config
+#   configs/tx_b210_all32prn.yaml          — 32-satellite overlay

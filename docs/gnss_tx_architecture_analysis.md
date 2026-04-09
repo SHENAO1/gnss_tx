@@ -1,4 +1,31 @@
- # GNSS_TX 工程架构分析报告
+# GNSS_TX 工程架构分析报告
+
+**工程定位**：GPS L1 C/A 单星可选 PRN 扩频基带发送与实验验证平台（非完整 GNSS 卫星信号仿真器）。
+采用预生成缓冲区循环回放方式，面向 USRP B210 + 频谱仪观察，核心参数：芯片率 1.023 Mcps、采样率 4.092 MHz、中心频率 100 MHz（实验室合规频段）。
+
+> 本文档是完整的模块设计分析报告。快速入门见 [README.md](../README.md)，模块 API 速查见 [src/gnss_tx/README.md](../src/gnss_tx/README.md)。
+
+---
+
+## 目录
+
+- [1. 总体功能分析](#1-总体功能分析)
+  - [1.1 工程目标](#11-工程目标)
+  - [1.2 当前已实现的功能模块](#12-当前已实现的功能模块)
+  - [1.3 当前未具备的典型 GNSS 发射能力](#13-当前未具备的典型-gnss-发射能力)
+- [2. 代码结构树](#2-代码结构树)
+- [3. 核心流程梳理](#3-核心流程梳理)
+- [4. 当前实现程度评估](#4-当前实现程度评估)
+- [5. 下一步建议](#5-下一步建议)
+- [6. 明显设计问题与隐患](#6-明显设计问题与隐患)
+- [7. 关键接口说明](#7-关键接口说明)
+- [8. 当前实现状态的验证证据](#8-当前实现状态的验证证据)
+- [9. 综合结论](#9-综合结论)
+- [10. 模块实现参考手册](#10-模块实现参考手册)
+- [11. 配置文件参数参考](#11-配置文件参数参考)
+- [12. 脚本命令参考](#12-脚本命令参考)
+
+---
 
 ## 1. 总体功能分析
 
@@ -17,6 +44,17 @@
 `以 GPS L1 C/A 单星可选 PRN 为核心、采用预生成缓冲区循环回放方式、面向 USRP B210 和频谱仪观察的实验型发射链。`
 
 ### 1.2 当前已实现的功能模块
+
+**模块速查表**（详细 API 见 [src/gnss_tx/README.md](../src/gnss_tx/README.md)）：
+
+| 模块 | 核心文件 | 关键类/函数 |
+| --- | --- | --- |
+| `ca/` | `prn_generator.py` | `generate_ca_code(prn_id)` |
+| `nav/` | `nav_bits.py` | `CyclicNavBitSource`, `normalize_nav_bits` |
+| `signal/` | `spreader.py`, `multi_sat_combiner.py` | `GpsL1CaBpskGenerator`, `build_multi_sat_replay_samples` |
+| `gr/` | `top_block.py` | `GpsL1CaTxTopBlock` |
+| `usrp/` | `tx_controller.py`, `b210_sink.py` | `TxRuntimeConfig`, `load_tx_runtime_config` |
+| `utils/` | `io.py` | `load_yaml_file` |
 
 当前已经落地的模块能力如下：
 

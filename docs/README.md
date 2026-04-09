@@ -16,10 +16,24 @@
   Git 分支职责与提交约定，含 GRC 生成文件管理和合并到 main 的条件。
 - `design/actual_sample_rate_detection.md`
   采样率检测机制说明：USRP 硬件实际采样率 vs 软件请求采样率的检测与报告流程。
-- `gnss_tx_signal_chain.drawio`
-  发射端信号链架构图（DrawIO 格式）。
-- `design/actual_sample_rate_detection.drawio`
-  采样率检测流程图（DrawIO 格式）。
+
+## 图表索引（docs/diagrams/）
+
+所有 DrawIO 架构图统一存放在 [`diagrams/`](diagrams/) 目录。
+用 [app.diagrams.net](https://app.diagrams.net) 或 VS Code Draw.io 插件打开 `.drawio` 文件查看。
+如需生成 PNG 快照，可运行：`drawio --export --format png --output diagrams/ diagrams/*.drawio`
+
+| 文件 | 说明 |
+| ---- | ---- |
+| [`diagrams/system_architecture.drawio`](diagrams/system_architecture.drawio) | 全局四泳道架构（TX / RF / RX / MATLAB） |
+| [`diagrams/signal_chain.drawio`](diagrams/signal_chain.drawio) | 发射端信号链完整流程（配置→信号→GNU Radio→硬件） |
+| [`diagrams/design_sample_rate_detection.drawio`](diagrams/design_sample_rate_detection.drawio) | 采样率检测机制流程图 |
+| [`diagrams/module_ca.drawio`](diagrams/module_ca.drawio) | `ca/` 模块：C/A 码生成与重采样 |
+| [`diagrams/module_nav.drawio`](diagrams/module_nav.drawio) | `nav/` 模块：导航 bit 归一化与循环访问 |
+| [`diagrams/module_signal.drawio`](diagrams/module_signal.drawio) | `signal/` 模块：扩频、多星叠加与辅助信号 |
+| [`diagrams/module_gr.drawio`](diagrams/module_gr.drawio) | `gr/` 模块：GNU Radio top block 与参考源块 |
+| [`diagrams/module_usrp.drawio`](diagrams/module_usrp.drawio) | `usrp/` 模块：配置装载、运行时装配与报告侧路 |
+| [`diagrams/module_utils.drawio`](diagrams/module_utils.drawio) | `utils/` 模块：已实现 YAML IO 与未来占位 |
 
 ## 按入口命令复现
 

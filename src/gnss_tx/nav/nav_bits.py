@@ -40,26 +40,24 @@ def _normalize_one_bit(token: str | int) -> int:
 
 
 def normalize_nav_bits(nav_pattern: Sequence[str | int] | str | None = None) -> np.ndarray:
-    """
-    Normalize nav bits to a 1-D int8 array in +/-1 representation.
+    """将导航 bit 模式归一化为双极性 int8 一维数组。
 
-    物理意义：
-    - 导航层输入可能写成 1/0、+1/-1 或字符串。
-    - 在扩频链路中统一转成 +/-1 之后，才能与 PRN chip 相乘，
-      形成最终的 spread chip。
-    - s[k]=d[k]⋅c[k]，其中 d[k] 是导航 bit，c[k] 是 PRN chip，s[k] 是发射的 spread chip。
-    - 如果数据还在 0/1 域，b∈{0,1}， c∈{−1,+1}，b⋅c∈{0,−1,+1}，当 b=0 ，时输出全变 0，相当于把信号“关掉”，不是“相位翻转”，这不符合 BPSK/DS-SS 的建模。
-    - 接收端再乘一次同一 PRN，r[k]⋅c[k]≈d[k]⋅c[k]⋅c[k]=d[k]，因为 c[k]⋅c[k]=1，所以能正确恢复 d[k]。
+    物理意义：扩频链路要求 s[k] = d[k]·c[k]，其中 d[k] 为导航 bit，
+    c[k] 为 PRN chip，均须为 +/-1。若 d[k] 保留 0/1 表示，乘积会出现
+    0 值，相当于"关掉"信号，破坏 BPSK 建模。统一转为 +/-1 后，
+    接收端相关解扩 r[k]·c[k] ≈ d[k] 才能正确恢复导航数据。
 
+    Args:
+        nav_pattern: 导航 bit 输入，支持三种形式：
+            - None：使用 DEFAULT_NAV_PATTERN。
+            - 字符串：按逗号/空白分词；若分词为空则按字符拆分。
+            - 序列（int/str 元素）：逐元素归一化，支持 1/0/-1/"+"/"-" 等格式。
 
-        输入行为：
-        - nav_pattern is None：使用 DEFAULT_NAV_PATTERN。
-        - nav_pattern 为字符串：优先按逗号/空白分词；若分词为空则按字符拆分。
-        - nav_pattern 为序列：逐元素归一化。
+    Returns:
+        shape=(N,) 的 np.int8 数组，元素仅为 +1 或 -1。
 
-        输出约束：
-        - 返回 np.int8 的一维数组，元素仅为 {-1, +1}。
-        - 若输入为空，抛出 ValueError。
+    Raises:
+        ValueError: 输入为空序列，或包含不支持的 token 时抛出。
     """
     if nav_pattern is None:
         tokens: Iterable[str | int] = DEFAULT_NAV_PATTERN
@@ -101,12 +99,24 @@ class CyclicNavBitSource:
         object.__setattr__(self, "bits", bit_array)
 
     def bit_at(self, index: int) -> int:
-        # 当前工程使用循环导航 bit 源，便于长时间回放时保持模式重复。
-        # 取模实现周期访问：index 可持续增长而无需手动重置。
+        """返回指定时刻对应的导航 bit（+1 或 -1）。
+
+        取模实现周期访问，index 可持续增长而无需手动重置。
+
+        Args:
+            index: 导航 bit 全局索引（非负整数），对应发射序列中的第几个 bit。
+
+        Returns:
+            +1 或 -1。
+        """
         return int(self.bits[index % self.bits.size])
 
     def as_array(self) -> np.ndarray:
-        # 返回副本，避免外部误修改内部状态。
+        """返回内部 bit 模式的副本，避免外部误修改内部状态。
+
+        Returns:
+            shape=(N,) 的 np.int8 数组，元素为 +1 或 -1。
+        """
         return self.bits.copy()
 
 

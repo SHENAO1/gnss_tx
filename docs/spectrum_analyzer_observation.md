@@ -27,8 +27,8 @@
 
 ## 推荐配置
 
-- 安全基线配置：[`configs/tx_b210.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210.yaml)
-- 可见谱复现配置：[`configs/tx_b210_visible_spectrum.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
+- 安全基线配置：[`configs/tx_b210.yaml`](../configs/tx_b210.yaml)
+- 可见谱复现配置：[`configs/tx_b210_visible_spectrum.yaml`](../configs/tx_b210_visible_spectrum.yaml)
 
 建议保留安全基线配置作为默认起点；当你需要复现或继续观察宽带包络时，使用可见谱配置。
 
@@ -38,7 +38,7 @@
   - Python runtime 的默认安全基线。
 - `configs/tx_b210_visible_spectrum.yaml`
   - 当前 runtime / Ubuntu bring-up 的可见谱配置。
-- [`experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md`](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
+- [`experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md`](../experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
   - 历史实验检查点，记录的是当日 `PRN1` 实验事实，不代表当前功能边界仍限于 PRN1。
 
 ## 推荐排障顺序
@@ -118,9 +118,9 @@ PYTHONPATH=src python3 scripts/run_tx.py \
 
 ## 实验记录与自动化
 
-- 检查点记录：[`experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md`](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
-- 射频观察模板：[`experiments/templates/general/observation_log_template.md`](/home/shen/projects/gnss_tx/experiments/templates/general/observation_log_template.md)
-- sweep 参数模板：[`experiments/records/2026-03-22/tx_visibility_sweep/tx_visibility_sweep_template.csv`](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/tx_visibility_sweep_template.csv)
+- 检查点记录：[`experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md`](../experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
+- 射频观察模板：[`experiments/templates/general/observation_log_template.md`](../experiments/templates/general/observation_log_template.md)
+- sweep 参数模板：[`experiments/records/2026-03-22/tx_visibility_sweep/tx_visibility_sweep_template.csv`](../experiments/records/2026-03-22/tx_visibility_sweep/tx_visibility_sweep_template.csv)
 - 实验当天勾选清单和实验草稿：由 `scripts/plan_tx_visibility_sweep.py` 自动生成
 
 ## 发射参数试验建议

@@ -28,23 +28,16 @@ class GeneratorState:
 
 
 class GpsL1CaBpskGenerator:
-    """
-    Stateful GPS L1 C/A PRN generator with 50 bps cyclic navigation bits.
+    """有状态的 GPS L1 C/A BPSK 扩频样本生成器，支持循环导航 bit。
 
-    数据流对应关系：
-    - nav bit: 导航数据层符号，持续 20 ms。
-    - chip: nav bit 与 PRN C/A 码相乘后的扩频码片，持续约 1 / 1.023e6 s。
-    - sample: 数字基带采样点，用于送入 GNU Radio / USRP。
+    三层时间尺度对应关系：
+    - nav bit：导航数据符号（+/-1），持续 20 ms（20 个 C/A 码周期）。
+    - chip：nav bit × PRN chip 的扩频码片，速率 1.023 Mcps（约 977 ns/chip）。
+    - sample：数字基带采样点，速率 = chip_rate × samples_per_chip，送入 GNU Radio / USRP。
 
-    因此本类的核心职责是：
-    1. 维护导航 bit、码相位、sample 相位这三个时间尺度的状态。
-    2. 先确定当前 nav bit。
-    3. 再取当前 PRN chip。
-    4. 两者相乘得到 spread chip。
-    5. 将每个 chip 展开为多个 baseband sample。
+    核心职责：维护上述三个时间尺度的状态，按需连续输出 complex64 样本。
+    每次调用 generate_* 都从上次停下的位置继续，不会悄悄从头开始。
     """
-    # 通俗理解：这个类像“带记忆的信号笔”。
-    # 每次调用 generate_* 都会从上次停下的位置继续输出，不会悄悄从头开始。
 
     def __init__(
         self,
@@ -76,7 +69,7 @@ class GpsL1CaBpskGenerator:
         if initial_nav_bit_index < 0:
             raise ValueError("initial_nav_bit_index must be >= 0.")
 
-        # 这里把“时间刻度”初始化到起点：
+        # 这里把"时间刻度"初始化到起点：
         # code_phase 控制码片位置，nav_epoch_in_bit 控制 20ms 内第几个 1ms，
         # nav_bit_index 控制当前导航 bit，sample_phase_in_chip 控制 chip 内采样偏移。
         self.state = GeneratorState(
@@ -87,20 +80,23 @@ class GpsL1CaBpskGenerator:
         )
 
     def _current_nav_bit(self) -> int:
-        # 当前 20ms 时间窗内要使用的导航符号（通常为 +1 或 -1）。
+        """返回当前 20 ms 时间窗内的导航符号（+1 或 -1）。"""
         return self.nav_source.bit_at(self.state.nav_bit_index)
 
     def _current_spread_chip(self) -> np.int8:
-        # 物理意义：导航 bit 负责 20 ms 级别的符号翻转，
-        # PRN 码负责 1.023 Mcps 级别的扩频。
-        # 结果是每个 chip 对应一个符号位（+1/-1）。
+        """返回当前扩频 chip（nav bit × PRN chip，结果为 +1 或 -1）。
+
+        导航 bit 控制 20 ms 级符号翻转，PRN 码控制 1.023 Mcps 级扩频，
+        两者相乘得到待调制的 spread chip。
+        """
         return np.int8(self._current_nav_bit() * self.ca_code[self.state.code_phase])
 
     def _advance_chip(self) -> None:
-        # 推进到下一个 PRN chip。
-        # 可把它想成一个“里程表”：
-        # 先走 code_phase；code_phase 回卷时推进 nav_epoch_in_bit；
-        # nav_epoch_in_bit 再回卷时推进 nav_bit_index。
+        """将生成器状态推进一个 chip，同步更新三层时间尺度。
+
+        状态推进顺序：code_phase → nav_epoch_in_bit → nav_bit_index。
+        类似"里程表"：低位溢出时才进位到高位。无返回值，直接修改 self.state。
+        """
         self.state.code_phase += 1
         if self.state.code_phase < CA_CODE_LENGTH:
             return
@@ -117,13 +113,26 @@ class GpsL1CaBpskGenerator:
         self.state.nav_bit_index += 1
 
     def generate_chips(self, num_chips: int) -> np.ndarray:
+        """生成 chip 级扩频序列，常用于离线分析或相关性验证。
+
+        每次循环取当前 spread chip 后将状态推进 1 个 chip。
+        要求生成器当前处于 chip 对齐状态（sample_phase_in_chip == 0）。
+
+        Args:
+            num_chips: 要生成的 chip 数量（>= 0）。
+
+        Returns:
+            shape=(num_chips,) 的 np.int8 数组，元素为 +1 或 -1。
+
+        Raises:
+            ValueError: num_chips < 0 时抛出。
+            RuntimeError: 生成器未处于 chip 对齐状态时抛出。
+        """
         if num_chips < 0:
             raise ValueError("num_chips must be >= 0.")
         if self.state.sample_phase_in_chip != 0:
             raise RuntimeError("Generator is not chip-aligned; finish the current chip first.")
 
-        # 该接口输出的是 chip 级序列，常用于离线分析或相关性验证。
-        # 这里每次循环只做两件事：取当前 chip，然后把状态推进 1 个 chip。
         chips = np.empty(num_chips, dtype=np.int8)
         for index in range(num_chips):
             chips[index] = self._current_spread_chip()
@@ -131,14 +140,28 @@ class GpsL1CaBpskGenerator:
         return chips
 
     def generate_samples(self, num_samples: int) -> np.ndarray:
+        """生成 complex64 基带样本，可直接送入 GNU Radio / USRP。
+
+        Q 支路恒为 0（实值 BPSK），以 complex64 封装便于对接 GNU Radio complex 流。
+        每个 chip 被展开为 samples_per_chip 个相同幅度的样本；若当前处于 chip
+        中途，则先补齐当前 chip 剩余样本，保证 chip 边界严格对齐。
+
+        Args:
+            num_samples: 要生成的样本数量（>= 0）。
+
+        Returns:
+            shape=(num_samples,) 的 np.complex64 数组。
+
+        Raises:
+            ValueError: num_samples < 0 时抛出。
+        """
         if num_samples < 0:
             raise ValueError("num_samples must be >= 0.")
         out = np.empty(num_samples, dtype=np.complex64)
         if num_samples == 0:
             return out
 
-        # 当前实现中 Q 支路恒为 0，因此生成的是实值 BPSK，
-        # 再以 complex64 表示，便于直接送入 GNU Radio complex 流。
+        # Q 支路恒为 0，生成实值 BPSK，以 complex64 封装送入 GNU Radio complex 流。
         pos_level = np.complex64(self.amplitude + 0j)
         neg_level = np.complex64(-self.amplitude + 0j)
 
@@ -147,7 +170,7 @@ class GpsL1CaBpskGenerator:
             spread_chip = self._current_spread_chip()
             # 一个 chip 会被展开成 ``samples_per_chip`` 个 sample。
             # 如果当前调用只消费了部分 chip，就先把当前 chip 的剩余 sample 补齐。
-            # 也就是说 run 表示“本轮最多能连续写多少个相同符号的 sample”。
+            # 也就是说 run 表示"本轮最多能连续写多少个相同符号的 sample"。
             samples_left_in_chip = self.samples_per_chip - self.state.sample_phase_in_chip
             samples_left_in_request = num_samples - write_index
             run = min(samples_left_in_chip, samples_left_in_request)

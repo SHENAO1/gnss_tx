@@ -3,7 +3,7 @@
 ## 基本信息
 - 实验日期：`2026-03-22`
 - 操作者：
-- 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
+- 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](../configs/tx_b210_visible_spectrum.yaml)
 - 实验目标：在可见谱配置基础上，寻找最低可见且稳定的发射参数组合，并同步填写实验表格关键字段
 
 ## 固定发射条件

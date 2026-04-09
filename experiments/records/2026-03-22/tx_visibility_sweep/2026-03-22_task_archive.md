@@ -13,7 +13,7 @@
 
 - 已确认在频谱仪上可以看到 `PRN1` 的宽带包络
 - 当前可见谱复现配置：
-  - 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
+  - 配置文件：[`configs/tx_b210_visible_spectrum.yaml`](../configs/tx_b210_visible_spectrum.yaml)
   - `center_freq = 100 MHz`
   - `sample_rate = 4.092 Msps`
   - `samples_per_chip = 4`

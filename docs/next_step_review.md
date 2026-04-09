@@ -27,12 +27,12 @@
 
 当前工程的真实主链仍然是：
 
-- [scripts/run_tx.py](/home/shen/projects/gnss_tx/scripts/run_tx.py)
-- [src/gnss_tx/usrp/tx_controller.py](/home/shen/projects/gnss_tx/src/gnss_tx/usrp/tx_controller.py)
-- [src/gnss_tx/gr/top_block.py](/home/shen/projects/gnss_tx/src/gnss_tx/gr/top_block.py)
-- [src/gnss_tx/signal/spreader.py](/home/shen/projects/gnss_tx/src/gnss_tx/signal/spreader.py)
-- [src/gnss_tx/nav/nav_bits.py](/home/shen/projects/gnss_tx/src/gnss_tx/nav/nav_bits.py)
-- [src/gnss_tx/ca/prn_generator.py](/home/shen/projects/gnss_tx/src/gnss_tx/ca/prn_generator.py)
+- [scripts/run_tx.py](../scripts/run_tx.py)
+- [src/gnss_tx/usrp/tx_controller.py](../src/gnss_tx/usrp/tx_controller.py)
+- [src/gnss_tx/gr/top_block.py](../src/gnss_tx/gr/top_block.py)
+- [src/gnss_tx/signal/spreader.py](../src/gnss_tx/signal/spreader.py)
+- [src/gnss_tx/nav/nav_bits.py](../src/gnss_tx/nav/nav_bits.py)
+- [src/gnss_tx/ca/prn_generator.py](../src/gnss_tx/ca/prn_generator.py)
 
 这条链路的关键特点是：
 
@@ -45,7 +45,7 @@
 
 ## GNU Radio Companion 的判断
 
-[flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc) 已被整理为：
+[flowgraphs/gnss_tx_main.grc](../flowgraphs/gnss_tx_main.grc) 已被整理为：
 
 - Ubuntu 虚拟机内可直接打开、可点击运行的 Companion 主流图。
 - Python runtime 发射链的镜像入口。
@@ -55,7 +55,7 @@
 
 - 它不是新的配置真源。
 - 它不复制 PRN、nav bit 或 spreader 算法。
-- 它继续复用 [grc/blocks/gnss_tx_gps_l1_ca_source.block.yml](/home/shen/projects/gnss_tx/grc/blocks/gnss_tx_gps_l1_ca_source.block.yml) 和 Python 侧 `make_gps_l1_ca_vector_source()`。
+- 它继续复用 [grc/blocks/gnss_tx_gps_l1_ca_source.block.yml](../grc/blocks/gnss_tx_gps_l1_ca_source.block.yml) 和 Python 侧 `make_gps_l1_ca_vector_source()`。
 
 当前 Companion 默认值已经固定为：
 
@@ -73,7 +73,7 @@
 
 ### 1. 安全基线配置曾被删失
 
-[configs/tx_b210.yaml](/home/shen/projects/gnss_tx/configs/tx_b210.yaml) 在当前 worktree 中一度缺失，直接导致：
+[configs/tx_b210.yaml](../configs/tx_b210.yaml) 在当前 worktree 中一度缺失，直接导致：
 
 - 测试中的安全基线断言失效。
 - 文档中“默认低风险起点”的引用失真。
@@ -86,12 +86,12 @@
 
 ### 2. 当前可见谱配置与历史 checkpoint 已不完全相同
 
-[configs/tx_b210_visible_spectrum.yaml](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml) 当前 worktree 内配置为：
+[configs/tx_b210_visible_spectrum.yaml](../configs/tx_b210_visible_spectrum.yaml) 当前 worktree 内配置为：
 
 - `tx_gain = 10.0`
 - `amplitude = 1.0`
 
-而历史检查点 [experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md) 记录的是：
+而历史检查点 [experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md](../experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md) 记录的是：
 
 - `tx_gain = 10.0`
 - `amplitude = 0.5`
@@ -120,41 +120,41 @@ Companion 侧当前默认值定为：
 
 ### 已进入主链
 
-- [src/gnss_tx/ca/prn_generator.py](/home/shen/projects/gnss_tx/src/gnss_tx/ca/prn_generator.py)
-- [src/gnss_tx/nav/nav_bits.py](/home/shen/projects/gnss_tx/src/gnss_tx/nav/nav_bits.py)
-- [src/gnss_tx/signal/spreader.py](/home/shen/projects/gnss_tx/src/gnss_tx/signal/spreader.py)
-- [src/gnss_tx/signal/iq_builder.py](/home/shen/projects/gnss_tx/src/gnss_tx/signal/iq_builder.py)
-- [src/gnss_tx/gr/top_block.py](/home/shen/projects/gnss_tx/src/gnss_tx/gr/top_block.py)
-- [src/gnss_tx/usrp/b210_sink.py](/home/shen/projects/gnss_tx/src/gnss_tx/usrp/b210_sink.py)
-- [src/gnss_tx/usrp/tx_controller.py](/home/shen/projects/gnss_tx/src/gnss_tx/usrp/tx_controller.py)
-- [src/gnss_tx/utils/io.py](/home/shen/projects/gnss_tx/src/gnss_tx/utils/io.py)
-- [scripts/run_tx.py](/home/shen/projects/gnss_tx/scripts/run_tx.py)
+- [src/gnss_tx/ca/prn_generator.py](../src/gnss_tx/ca/prn_generator.py)
+- [src/gnss_tx/nav/nav_bits.py](../src/gnss_tx/nav/nav_bits.py)
+- [src/gnss_tx/signal/spreader.py](../src/gnss_tx/signal/spreader.py)
+- [src/gnss_tx/signal/iq_builder.py](../src/gnss_tx/signal/iq_builder.py)
+- [src/gnss_tx/gr/top_block.py](../src/gnss_tx/gr/top_block.py)
+- [src/gnss_tx/usrp/b210_sink.py](../src/gnss_tx/usrp/b210_sink.py)
+- [src/gnss_tx/usrp/tx_controller.py](../src/gnss_tx/usrp/tx_controller.py)
+- [src/gnss_tx/utils/io.py](../src/gnss_tx/utils/io.py)
+- [scripts/run_tx.py](../scripts/run_tx.py)
 
 ### 已有实现但不是主链核心
 
-- [src/gnss_tx/ca/resampler.py](/home/shen/projects/gnss_tx/src/gnss_tx/ca/resampler.py)
-- [src/gnss_tx/signal/modulator.py](/home/shen/projects/gnss_tx/src/gnss_tx/signal/modulator.py)
-- [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)
-- [scripts/analyze_prn1_spread.py](/home/shen/projects/gnss_tx/scripts/analyze_prn1_spread.py)
-- [scripts/plan_tx_visibility_sweep.py](/home/shen/projects/gnss_tx/scripts/plan_tx_visibility_sweep.py)
+- [src/gnss_tx/ca/resampler.py](../src/gnss_tx/ca/resampler.py)
+- [src/gnss_tx/signal/modulator.py](../src/gnss_tx/signal/modulator.py)
+- [flowgraphs/gnss_tx_main.grc](../flowgraphs/gnss_tx_main.grc)
+- [scripts/analyze_prn1_spread.py](../scripts/analyze_prn1_spread.py)
+- [scripts/plan_tx_visibility_sweep.py](../scripts/plan_tx_visibility_sweep.py)
 
-其中 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc) 不算空壳，但属于“需要重建和持续校验的镜像入口”。
+其中 [flowgraphs/gnss_tx_main.grc](../flowgraphs/gnss_tx_main.grc) 不算空壳，但属于“需要重建和持续校验的镜像入口”。
 
 ### 空壳或占位
 
-- [configs/gps_l1_ca.yaml](/home/shen/projects/gnss_tx/configs/gps_l1_ca.yaml)
-- [configs/lab_single_tone.yaml](/home/shen/projects/gnss_tx/configs/lab_single_tone.yaml)
-- [flowgraphs/single_tone_test.grc](/home/shen/projects/gnss_tx/flowgraphs/single_tone_test.grc)
-- [flowgraphs/two_tone_test.grc](/home/shen/projects/gnss_tx/flowgraphs/two_tone_test.grc)
-- [scripts/export_iq.py](/home/shen/projects/gnss_tx/scripts/export_iq.py)
-- [scripts/generate_nav.py](/home/shen/projects/gnss_tx/scripts/generate_nav.py)
-- [src/gnss_tx/nav/subframe_builder.py](/home/shen/projects/gnss_tx/src/gnss_tx/nav/subframe_builder.py)
-- [src/gnss_tx/utils/logging.py](/home/shen/projects/gnss_tx/src/gnss_tx/utils/logging.py)
-- [src/gnss_tx/utils/timebase.py](/home/shen/projects/gnss_tx/src/gnss_tx/utils/timebase.py)
+- [configs/gps_l1_ca.yaml](../configs/gps_l1_ca.yaml)
+- [configs/lab_single_tone.yaml](../configs/lab_single_tone.yaml)
+- [flowgraphs/single_tone_test.grc](../flowgraphs/single_tone_test.grc)
+- [flowgraphs/two_tone_test.grc](../flowgraphs/two_tone_test.grc)
+- [scripts/export_iq.py](../scripts/export_iq.py)
+- [scripts/generate_nav.py](../scripts/generate_nav.py)
+- [src/gnss_tx/nav/subframe_builder.py](../src/gnss_tx/nav/subframe_builder.py)
+- [src/gnss_tx/utils/logging.py](../src/gnss_tx/utils/logging.py)
+- [src/gnss_tx/utils/timebase.py](../src/gnss_tx/utils/timebase.py)
 
 ## experiments 目录说明与使用约定
 
-[experiments](/home/shen/projects/gnss_tx/experiments) 目录现在应承担两类职责：
+[experiments](../experiments) 目录现在应承担两类职责：
 
 - 保存阶段性实验事实。
 - 保存当天的执行流程、扫描草稿和回填模板。
@@ -183,7 +183,7 @@ Companion 侧当前默认值定为：
 
 ## 下一阶段最优先的 5 个工程任务
 
-1. 持续维护 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)，保证 Ubuntu 虚拟机中点击运行即可持续发射单星扩频 BPSK 复基带。
+1. 持续维护 [flowgraphs/gnss_tx_main.grc](../flowgraphs/gnss_tx_main.grc)，保证 Ubuntu 虚拟机中点击运行即可持续发射单星扩频 BPSK 复基带。
 2. 明确并长期保持三套语义的边界：
    - `tx_b210.yaml` 是安全基线。
    - `tx_b210_visible_spectrum.yaml` 是当前 runtime 可见谱配置。

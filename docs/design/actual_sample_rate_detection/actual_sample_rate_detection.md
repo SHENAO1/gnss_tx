@@ -35,7 +35,7 @@ GNSS TX 发端在启动后会自动检测并显示 USRP 硬件的**实际采样�
 
 ## 检测流程
 
-> 流程图详见：[actual_sample_rate_detection.drawio](actual_sample_rate_detection.drawio)
+> 流程图详见：[design_sample_rate_detection.drawio](../../diagrams/design_sample_rate_detection.drawio)
 
 ```
 tb.start()                              # GNU Radio 流图启动，USRP 开始工作

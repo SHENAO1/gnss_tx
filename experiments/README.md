@@ -29,7 +29,7 @@
 
 ## 推荐实验流程
 
-1. 先运行 [run_tx.py](/home/shen/projects/gnss_tx/scripts/run_tx.py) 的 `--dry-run`
+1. 先运行 [run_tx.py](../scripts/run_tx.py) 的 `--dry-run`
    - 确认配置装载、实验摘要和设备发现输出合理。
 2. 再看软件侧预览
    - Python runtime 适合正式参数化运行和 `--qt-preview`。
@@ -70,10 +70,10 @@ PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
 
 - Python runtime
   - 适合 dry-run、正式实验、命令行参数覆盖、终端摘要输出和脚本化扫描。
-  - 权威入口是 [scripts/run_tx.py](/home/shen/projects/gnss_tx/scripts/run_tx.py)。
+  - 权威入口是 [scripts/run_tx.py](../scripts/run_tx.py)。
 - GNU Radio Companion
   - 适合 Ubuntu 虚拟机里直接点击运行、查看 QT 时域与频域预览、做教学演示和快速 bring-up。
-  - Companion 主流图是 [flowgraphs/gnss_tx_main.grc](/home/shen/projects/gnss_tx/flowgraphs/gnss_tx_main.grc)。
+  - Companion 主流图是 [flowgraphs/gnss_tx_main.grc](../flowgraphs/gnss_tx_main.grc)。
   - Companion 是 Python runtime 的镜像入口，不是新的配置真源。
 
 ## 跨项目计划参考
@@ -86,13 +86,13 @@ PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
 ## 安全基线、当前可见谱配置与历史检查点
 
 - 安全基线
-  - 配置文件：[tx_b210.yaml](/home/shen/projects/gnss_tx/configs/tx_b210.yaml)
+  - 配置文件：[tx_b210.yaml](../configs/tx_b210.yaml)
   - 作用：首次低功率 bring-up 和低风险链路确认。
 - 当前可见谱配置
-  - 配置文件：[tx_b210_visible_spectrum.yaml](/home/shen/projects/gnss_tx/configs/tx_b210_visible_spectrum.yaml)
+  - 配置文件：[tx_b210_visible_spectrum.yaml](../configs/tx_b210_visible_spectrum.yaml)
   - 作用：当前 runtime 配置里的持续扩频观察组合。
 - 历史检查点
-  - 文件：[2026-03-22_prn1_visible_spectrum_checkpoint.md](/home/shen/projects/gnss_tx/experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
+  - 文件：[2026-03-22_prn1_visible_spectrum_checkpoint.md](../experiments/records/2026-03-22/tx_visibility_sweep/2026-03-22_prn1_visible_spectrum_checkpoint.md)
   - 作用：保留当天“PRN1 在频谱仪上可见宽带包络”的实验事实。
 
 不要把这三者混成同一层语义：
@@ -107,7 +107,7 @@ PYTHONPATH=src python3 scripts/plan_tx_visibility_sweep.py
   - `templates/general/observation_log_template.md`
 - 主要由脚本生成或脚本辅助生成
   - 当天 `records/YYYY-MM-DD/tx_visibility_sweep/` 下的 checklist、CSV、draft
-  - 生成脚本是 [plan_tx_visibility_sweep.py](/home/shen/projects/gnss_tx/scripts/plan_tx_visibility_sweep.py)
+  - 生成脚本是 [plan_tx_visibility_sweep.py](../scripts/plan_tx_visibility_sweep.py)
 
 ## 每次实验结束后建议回写的内容
 

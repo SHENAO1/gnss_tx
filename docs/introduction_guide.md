@@ -13,7 +13,7 @@
 
 ## 第一步：建立全局认知（5 分钟）
 
-**图表**：[`system_architecture.drawio`](system_architecture.drawio)
+**图表**：[`diagrams/system_architecture.drawio`](diagrams/system_architecture.drawio)
 
 用四条泳道快速建立全局框架，向听众说明整个收发系统的边界：
 
@@ -34,7 +34,7 @@
 
 ## 第二步：深入信号生成原理（10 分钟）
 
-**图表**：[`gnss_tx_signal_chain.drawio`](gnss_tx_signal_chain.drawio)
+**图表**：[`diagrams/signal_chain.drawio`](diagrams/signal_chain.drawio)
 
 从配置文件到 RF 输出的完整信号生成链，分四个层次讲解：
 
